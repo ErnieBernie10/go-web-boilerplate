@@ -4,13 +4,8 @@ services:
   psql:
     image: postgres:latest
     environment:
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: framer 
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Admin123
     ports:
-      - "${DB_PORT}:5432"
-    volumes:
-      - psql_volume:/var/lib/postgresql/data
-
-volumes:
-  psql_volume:
+      - "5432:5432"

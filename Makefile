@@ -1,4 +1,5 @@
 # Simple Makefile for a Go project
+include .env
 
 # Build the application
 all: build
@@ -16,7 +17,7 @@ run:
 
 # Create DB container
 docker-run:
-	@if docker compose up 2>/dev/null; then \
+	@if docker compose up -d 2>/dev/null; then \
 		: ; \
 	else \
 		echo "Falling back to Docker Compose V1"; \
@@ -31,6 +32,12 @@ docker-down:
 		echo "Falling back to Docker Compose V1"; \
 		docker-compose down; \
 	fi
+
+migrate:
+	@dbmate migrate
+
+generate:
+	@sqlc generate
 
 
 # Test the application

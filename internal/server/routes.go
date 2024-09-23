@@ -24,6 +24,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Get("/websocket", s.websocketHandler)
 
+	r.Route("/frame", s.frameResourceHandler)
+
 	return r
 }
 
@@ -40,7 +42,7 @@ func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	jsonResp, _ := json.Marshal(s.db.Health())
+	jsonResp, _ := json.Marshal(s.Health())
 	_, _ = w.Write(jsonResp)
 }
 

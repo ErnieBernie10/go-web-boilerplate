@@ -2,22 +2,23 @@ package server
 
 import (
 	"encoding/json"
+	"framer/internal/database"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )
 
-func (s *Server) frameResourceHandler(r chi.Router) {
-	r.Get("/", s.getFramesHandler)
-	r.Get("/{frameId}", s.getFrameHandler)
+func frameResourceHandler(r chi.Router) {
+	r.Get("/", getFramesHandler)
+	r.Get("/{frameId}", getFrameHandler)
 }
 
-func (s *Server) getFrameHandler(w http.ResponseWriter, r *http.Request) {
+func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (s *Server) getFramesHandler(w http.ResponseWriter, r *http.Request) {
-	fs, err := s.queries.GetFrames(s.ctx)
+func getFramesHandler(w http.ResponseWriter, r *http.Request) {
+	fs, err := database.Service.GetFrames(r.Context())
 	if err != nil {
 		w.Write([]byte(err.Error()))
 		return

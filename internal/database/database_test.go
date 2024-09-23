@@ -11,14 +11,17 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
+var dbContainer *postgres.PostgresContainer
+
 func mustStartPostgresContainer() (func(context.Context) error, error) {
 	var (
-		dbName = "database"
-		dbPwd  = "password"
-		dbUser = "user"
+		dbName = "framer"
+		dbPwd  = "Admin123"
+		dbUser = "postgres"
 	)
+	var err error
 
-	dbContainer, err := postgres.Run(
+	dbContainer, err = postgres.Run(
 		context.Background(),
 		"postgres:latest",
 		postgres.WithDatabase(dbName),
@@ -33,22 +36,15 @@ func mustStartPostgresContainer() (func(context.Context) error, error) {
 		return nil, err
 	}
 
-	database = dbName
-	password = dbPwd
-	username = dbUser
-
-	dbHost, err := dbContainer.Host(context.Background())
+	_, err = dbContainer.Host(context.Background())
 	if err != nil {
 		return dbContainer.Terminate, err
 	}
 
-	dbPort, err := dbContainer.MappedPort(context.Background(), "5432/tcp")
+	_, err = dbContainer.MappedPort(context.Background(), "5432/tcp")
 	if err != nil {
 		return dbContainer.Terminate, err
 	}
-
-	host = dbHost
-	port = dbPort.Port()
 
 	return dbContainer.Terminate, err
 }
@@ -67,16 +63,16 @@ func TestMain(m *testing.M) {
 }
 
 func TestNew(t *testing.T) {
-	srv := New()
-	if srv == nil {
+	err := NewDb(dbContainer.MustConnectionString(context.Background()))
+	if err != nil {
 		t.Fatal("New() returned nil")
 	}
 }
 
 func TestHealth(t *testing.T) {
-	srv := New()
+	NewDb(dbContainer.MustConnectionString(context.Background()))
 
-	stats := srv.Health()
+	stats := Health()
 
 	if stats["status"] != "up" {
 		t.Fatalf("expected status to be up, got %s", stats["status"])
@@ -92,9 +88,7 @@ func TestHealth(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	srv := New()
+	NewDb(dbContainer.MustConnectionString(context.Background()))
 
-	if srv.Close() != nil {
-		t.Fatalf("expected Close() to return nil")
-	}
+	Shutdown()
 }

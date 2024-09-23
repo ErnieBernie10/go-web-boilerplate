@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"framer/internal/database"
 	"log"
 	"net/http"
 
@@ -14,22 +15,22 @@ import (
 	"github.com/coder/websocket"
 )
 
-func (s *Server) RegisterRoutes() http.Handler {
+func RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	r.Get("/", s.HelloWorldHandler)
+	r.Get("/", HelloWorldHandler)
 
-	r.Get("/health", s.healthHandler)
+	r.Get("/health", healthHandler)
 
-	r.Get("/websocket", s.websocketHandler)
+	r.Get("/websocket", websocketHandler)
 
-	r.Route("/frame", s.frameResourceHandler)
+	r.Route("/frame", frameResourceHandler)
 
 	return r
 }
 
-func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
+func HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
 	resp := make(map[string]string)
 	resp["message"] = "Hello World"
 
@@ -41,12 +42,12 @@ func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(jsonResp)
 }
 
-func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	jsonResp, _ := json.Marshal(s.Health())
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	jsonResp, _ := json.Marshal(database.Health())
 	_, _ = w.Write(jsonResp)
 }
 
-func (s *Server) websocketHandler(w http.ResponseWriter, r *http.Request) {
+func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	socket, err := websocket.Accept(w, r, nil)
 
 	if err != nil {

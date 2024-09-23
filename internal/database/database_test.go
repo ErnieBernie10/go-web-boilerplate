@@ -3,9 +3,12 @@ package database
 import (
 	"context"
 	"log"
+	"net/url"
 	"testing"
 	"time"
 
+	"github.com/amacneil/dbmate/v2/pkg/dbmate"
+	_ "github.com/amacneil/dbmate/v2/pkg/driver/postgres"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -42,6 +45,19 @@ func mustStartPostgresContainer() (func(context.Context) error, error) {
 	}
 
 	_, err = dbContainer.MappedPort(context.Background(), "5432/tcp")
+	if err != nil {
+		return dbContainer.Terminate, err
+	}
+
+	connStr := dbContainer.MustConnectionString(context.Background()) + "sslmode=disable"
+	log.Println(connStr)
+	u, _ := url.Parse(connStr)
+	db := dbmate.New(u)
+
+	db.MigrationsDir = []string{"../../db/migrations"}
+	log.Println(db.MigrationsDir)
+
+	err = db.CreateAndMigrate()
 	if err != nil {
 		return dbContainer.Terminate, err
 	}
@@ -91,4 +107,23 @@ func TestClose(t *testing.T) {
 	NewDb(dbContainer.MustConnectionString(context.Background()))
 
 	Shutdown()
+}
+
+func TestGetFrames(t *testing.T) {
+	ctx := context.Background()
+	NewDb(dbContainer.MustConnectionString(ctx))
+
+	_, err := Service.db.ExecContext(ctx, "insert into frame (title, description) values ('Test', 'Test');")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := Service.GetFrames(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(res) != 1 {
+		t.Fatal("Res is not length 1")
+	}
 }

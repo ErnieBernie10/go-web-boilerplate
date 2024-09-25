@@ -16,6 +16,8 @@ type Frame struct {
 	Description string
 	CreatedAt   time.Time
 	ModifiedAt  time.Time
+	UserID      uuid.UUID
+	FrameStatus int32
 }
 
 type SchemaMigration struct {

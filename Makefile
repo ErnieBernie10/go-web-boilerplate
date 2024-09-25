@@ -17,27 +17,20 @@ run:
 
 # Create DB container
 docker-run:
-	@if docker compose up -d 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose up; \
-	fi
+	@docker compose up -d
 
 # Shutdown DB container
 docker-down:
-	@if docker compose down 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose down; \
-	fi
+	@docker compose down
 
 migrate:
 	@dbmate migrate
 
 generate:
 	@sqlc generate
+
+swag:
+	@swag init -g internal/server/routes.go
 
 
 # Test the application

@@ -12,7 +12,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	_ "framer/docs"
 	"github.com/coder/websocket"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func RegisterRoutes() http.Handler {
@@ -26,6 +28,8 @@ func RegisterRoutes() http.Handler {
 	r.Get("/websocket", websocketHandler)
 
 	r.Route("/frame", frameResourceHandler)
+
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	return r
 }

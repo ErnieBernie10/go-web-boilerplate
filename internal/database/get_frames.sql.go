@@ -10,7 +10,7 @@ import (
 )
 
 const getFrames = `-- name: GetFrames :many
-select id, title, description, created_at, modified_at from frame
+select id, title, description, created_at, modified_at, user_id, frame_status from frame
 `
 
 func (q *Queries) GetFrames(ctx context.Context) ([]Frame, error) {
@@ -28,6 +28,8 @@ func (q *Queries) GetFrames(ctx context.Context) ([]Frame, error) {
 			&i.Description,
 			&i.CreatedAt,
 			&i.ModifiedAt,
+			&i.UserID,
+			&i.FrameStatus,
 		); err != nil {
 			return nil, err
 		}

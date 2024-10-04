@@ -1,0 +1,15 @@
+{
+    "name": "framer",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "framer",
+    "workspaceFolder": "/workspace",
+    "postCreateCommand": "go mod tidy",
+    "remoteUser": "root",
+    "features": {
+      "ghcr.io/devcontainers/features/docker-in-docker:2.12.0": {}
+    },
+    "forwardPorts": [
+      8080
+    ]
+  }
+  

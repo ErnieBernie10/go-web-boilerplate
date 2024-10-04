@@ -1,4 +1,15 @@
 services:
+  framer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/workspace
+    command: bash -c "while sleep 1000; do :; done"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
   db:
     image: postgres:latest
     environment:

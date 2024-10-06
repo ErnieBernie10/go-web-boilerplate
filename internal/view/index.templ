@@ -1,0 +1,15 @@
+package view
+
+import "framer/internal/auth"
+
+templ indexPage(user *auth.Claims) {
+	<header>
+		if user != nil {
+			hello { user.Email }
+		} else {
+			<h1>
+			Hello, World
+		</h1>
+		}
+	</header>
+}

@@ -1,9 +1,10 @@
-package register
+package view
 
 import (
 	"database/sql"
+	"framer/internal/auth"
 	"framer/internal/database"
-	"framer/internal/view/index"
+	"framer/internal/view/layout"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -11,6 +12,16 @@ import (
 
 var email = "email"
 var password = "password"
+
+func HandleGetRegister(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
+
+	if user != nil {
+		http.Redirect(w, r, IndexPath, http.StatusSeeOther)
+	}
+
+	layout.Unauthenticated(RegisterPath, LoginPath, registerPage()).Render(r.Context(), w)
+}
 
 func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
@@ -41,5 +52,5 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, index.Path, http.StatusSeeOther)
+	http.Redirect(w, r, IndexPath, http.StatusSeeOther)
 }

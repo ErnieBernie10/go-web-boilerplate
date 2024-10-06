@@ -1,8 +1,6 @@
-package register
+package view
 
-const Path = "/register"
-
-templ Page() {
+templ registerPage() {
 	<div class="mt-4">
 		<form class="box" hx-post="/register" hx-target="body" hx-indicator=".button">
 			<div class="field">

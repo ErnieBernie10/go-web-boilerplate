@@ -1,20 +1,21 @@
 package server
 
 import (
-	"framer/internal/view/index"
-	"framer/internal/view/layout"
-	"framer/internal/view/login"
-	"framer/internal/view/register"
+	"framer/internal/auth"
+	"framer/internal/view"
 
-	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
 )
 
-func viewRouteHandler(r chi.Router) {
-	r.Handle(index.Path, templ.Handler(layout.UnauthenticatedLayout(index.Page())))
-	r.Handle(login.Path, templ.Handler(layout.UnauthenticatedLayout(login.Page())))
-	r.Handle(register.Path, templ.Handler(layout.UnauthenticatedLayout(register.Page())))
+type Route string
 
-	r.Post(login.Path, login.HandleLogin)
-	r.Post(register.Path, register.HandleRegister)
+func viewRouteHandler(r chi.Router) {
+	var publicRoutes = r.With(auth.OptionalUserMiddleware)
+	publicRoutes.Get(view.IndexPath, view.HandleGetIndex)
+
+	publicRoutes.Get(view.RegisterPath, view.HandleGetRegister)
+	publicRoutes.Post(view.RegisterPath, view.HandleRegister)
+
+	publicRoutes.Get(view.LoginPath, view.HandleGetLogin)
+	publicRoutes.Post(view.LoginPath, view.HandleLogin)
 }

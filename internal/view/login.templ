@@ -1,10 +1,8 @@
-package login
+package view
 
-const Path = "/login"
-
-templ Page() {
+templ loginPage() {
 	<div class="mt-4">
-		<form class="box" hx-post="/login" hx-target="body" hx-indicator=".button">
+		<form class="box" hx-post="/login" hx-indicator=".button">
 			<div class="field">
 				<label class="label" for={ email }>Email</label>
 				<div class="control has-icons-left has-icons-right">

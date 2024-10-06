@@ -1,11 +1,8 @@
 package layout
 
-import (
-	"framer/internal/view/login"
-	"framer/internal/view/register"
-)
+import "framer/internal/auth"
 
-templ UnauthenticatedLayout(children ...templ.Component) {
+templ Authenticated(user *auth.Claims, children ...templ.Component) {
 	<script>
 	document.addEventListener('DOMContentLoaded', () => {
 
@@ -55,14 +52,7 @@ templ UnauthenticatedLayout(children ...templ.Component) {
 				</div>
 				<div class="navbar-end">
 					<div class="navbar-item">
-						<div class="buttons">
-							<a href={ register.Path } class="button is-primary">
-								<strong>Sign up</strong>
-							</a>
-							<a href={ login.Path } class="button is-light">
-								Log in
-							</a>
-						</div>
+                        { user.Email }
 					</div>
 				</div>
 			</div>

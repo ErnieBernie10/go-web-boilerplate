@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	_ "framer/docs"
+
 	"github.com/coder/websocket"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -21,13 +22,12 @@ func RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	r.Get("/", HelloWorldHandler)
+	r.Group(viewRouteHandler)
+	r.Group(apiRouteHandler)
 
 	r.Get("/health", healthHandler)
 
 	r.Get("/websocket", websocketHandler)
-
-	r.Route("/frame", frameResourceHandler)
 
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 

@@ -5,12 +5,9 @@ create table frame (
     description text not null default '',
     created_at timestamptz not null default now(),
     modified_at timestamptz not null default now(),
-    user_id uuid NOT NULL,
+    user_id varchar(50) NOT NULL,
     frame_status integer NOT NULL,
     PRIMARY KEY(id)
 );
-
 -- migrate:down
-
 drop table frame;
-

@@ -5,10 +5,22 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type AppUser struct {
+	ID             uuid.UUID
+	Email          string
+	PasswordHash   sql.NullString
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Name           sql.NullString
+	Provider       sql.NullString
+	ProviderUserID sql.NullString
+}
 
 type Frame struct {
 	ID          uuid.UUID

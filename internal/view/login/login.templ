@@ -1,0 +1,25 @@
+package login
+
+const Path = "/login"
+
+templ Page() {
+	<div class="mt-4">
+		<form class="box" hx-post="/login" hx-target="body" hx-indicator=".button">
+			<div class="field">
+				<label class="label" for={ email }>Email</label>
+				<div class="control has-icons-left has-icons-right">
+					<input class="input" type="email" name={ email } placeholder="e.g. alex@example.com"/>
+					<span class="icon is-left"><i class="ti ti-mail"></i></span>
+				</div>
+			</div>
+			<div class="field">
+				<label class="label" for={ password }>Password</label>
+				<div class="control has-icons-left has-icons-right">
+					<input class="input" name={ password } type="password" placeholder="********"/>
+					<span class="icon is-left"><i class="ti ti-password"></i></span>
+				</div>
+			</div>
+			<button type="submit" class="button is-primary">Sign in</button>
+		</form>
+	</div>
+}

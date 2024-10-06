@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/workspace
+      - ~/.ssh:/root/.ssh
     command: bash -c "while sleep 1000; do :; done"
     ports:
       - "8080:8080"
@@ -13,13 +14,15 @@ services:
   db:
     image: postgres:latest
     environment:
-      POSTGRES_DB: framer 
+      POSTGRES_DB: framer
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Admin123
     ports:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      
+
 volumes:
   db-data:
+
+

@@ -1,6 +1,6 @@
-package view
+package home
 
-import "framer/internal/auth"
+import "framer/internal/features/auth"
 
 templ indexPage(user *auth.Claims) {
 	<header>
@@ -8,8 +8,8 @@ templ indexPage(user *auth.Claims) {
 			hello { user.Email }
 		} else {
 			<h1>
-			Hello, World
-		</h1>
+				Hello, World
+			</h1>
 		}
 	</header>
 }

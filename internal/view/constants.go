@@ -1,7 +1,8 @@
 package view
 
 const (
-	IndexPath    = "/"
-	LoginPath    = "/login"
-	RegisterPath = "/register"
+	LoginPath    = "/auth/login"
+	RegisterPath = "/auth/register"
+
+	IndexPath = "/"
 )

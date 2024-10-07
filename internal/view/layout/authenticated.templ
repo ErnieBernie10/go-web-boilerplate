@@ -1,8 +1,10 @@
 package layout
 
-import "framer/internal/auth"
+type AuthenticatedViewModel struct {
+	Email string
+}
 
-templ Authenticated(user *auth.Claims, children ...templ.Component) {
+templ Authenticated(user *AuthenticatedViewModel, children ...templ.Component) {
 	<script>
 	document.addEventListener('DOMContentLoaded', () => {
 
@@ -52,7 +54,7 @@ templ Authenticated(user *auth.Claims, children ...templ.Component) {
 				</div>
 				<div class="navbar-end">
 					<div class="navbar-item">
-                        { user.Email }
+						{ user.Email }
 					</div>
 				</div>
 			</div>

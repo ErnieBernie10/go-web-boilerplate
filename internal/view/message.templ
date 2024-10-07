@@ -1,0 +1,9 @@
+package view
+
+templ Message(severity Severity, err ...string) {
+	if err != nil {
+		<div class="mt-4 message message-body is-danger">
+			{ err[0] }
+		</div>
+	}
+}

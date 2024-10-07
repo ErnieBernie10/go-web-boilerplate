@@ -2,7 +2,7 @@ package auth
 
 import "framer/internal/view"
 
-templ loginPage() {
+templ loginPage(err ...view.MessageViewModel) {
 	<div class="mt-4">
 		<form class="box" hx-post={ view.LoginPath } hx-indicator=".button">
 			<div class="field">

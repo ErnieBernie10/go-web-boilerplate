@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"net/http"
+	"os"
 )
 
 type ValidationError error
@@ -16,6 +17,10 @@ func HandleError(w http.ResponseWriter, err error) {
 	case ValidationError:
 		w.Write([]byte(e.Error()))
 	default:
-		w.Write([]byte("Internal server error"))
+		if os.Getenv("APP_ENV") == string(Development) {
+			w.Write([]byte(err.Error()))
+		} else {
+			w.Write([]byte("Internal server error"))
+		}
 	}
 }

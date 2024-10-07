@@ -13,9 +13,9 @@ import (
 )
 
 func FrameResourceHandler(r chi.Router) {
-	r.Get("/", getFramesHandler)
-	r.Get("/{id}", getFrameHandler)
-	r.Post("/", postFrameHandler)
+	r.Get("/frame", getFramesHandler)
+	r.Get("/frame/{id}", getFrameHandler)
+	r.Post("/frame", postFrameHandler)
 }
 
 type getFrameDto struct {

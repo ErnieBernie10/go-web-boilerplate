@@ -11,6 +11,6 @@ type Route string
 
 func viewRouteHandler(r chi.Router) {
 	var publicRoutes = r.With(auth.OptionalUserMiddleware)
-	publicRoutes.Group(auth.FrameResourceHandler)
+	publicRoutes.Group(auth.AuthResourceHandler)
 	publicRoutes.Group(home.HomeResourceHandler)
 }

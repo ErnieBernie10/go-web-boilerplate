@@ -8,7 +8,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const UserContextKey = "User"
+const TokenContextKey = "Token"
+const RefreshContextKey = "Refresh"
 
 var JwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
@@ -45,7 +46,7 @@ func AuthGuardMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Step 3: Store the user information in the request context.
-		ctx := context.WithValue(r.Context(), UserContextKey, claims)
+		ctx := context.WithValue(r.Context(), TokenContextKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -53,9 +54,9 @@ func AuthGuardMiddleware(next http.Handler) http.Handler {
 func OptionalUserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Step 1: Get the JWT token from the "token" cookie.
-		cookie, err := r.Cookie(UserContextKey)
+		cookie, err := r.Cookie(TokenContextKey)
 		if err != nil {
-			ctx := context.WithValue(r.Context(), UserContextKey, nil)
+			ctx := context.WithValue(r.Context(), TokenContextKey, nil)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -67,19 +68,19 @@ func OptionalUserMiddleware(next http.Handler) http.Handler {
 			return JwtSecret, nil
 		})
 		if err != nil || !token.Valid {
-			ctx := context.WithValue(r.Context(), UserContextKey, nil)
+			ctx := context.WithValue(r.Context(), TokenContextKey, nil)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 
 		// Step 3: Store the user information in the request context.
-		ctx := context.WithValue(r.Context(), UserContextKey, claims)
+		ctx := context.WithValue(r.Context(), TokenContextKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
 func GetUser(r *http.Request) *Claims {
-	user, ok := r.Context().Value(UserContextKey).(*Claims)
+	user, ok := r.Context().Value(TokenContextKey).(*Claims)
 
 	if !ok {
 		return nil

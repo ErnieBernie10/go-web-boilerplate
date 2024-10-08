@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"framer/internal/database"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"fmt"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httplog/v2"
 
 	_ "framer/docs"
 
@@ -20,7 +22,8 @@ import (
 
 func RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	logger := NewLogger()
+	r.Use(httplog.RequestLogger(logger))
 
 	r.Group(viewRouteHandler)
 	r.Group(apiRouteHandler)
@@ -32,6 +35,26 @@ func RegisterRoutes() http.Handler {
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	return r
+}
+
+func NewLogger() *httplog.Logger {
+	return httplog.NewLogger("framer-server-logger", httplog.Options{
+		// JSON:             true,
+		LogLevel:         slog.LevelDebug,
+		Concise:          true,
+		RequestHeaders:   true,
+		MessageFieldName: "message",
+		// TimeFieldFormat: time.RFC850,
+		Tags: map[string]string{
+			"version": "1.0.0",
+			"env":     os.Getenv("APP_ENV"),
+		},
+		QuietDownRoutes: []string{
+			"/",
+		},
+		QuietDownPeriod: 10 * time.Second,
+		// SourceFieldName: "source",
+	})
 }
 
 func HelloWorldHandler(w http.ResponseWriter, r *http.Request) {

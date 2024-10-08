@@ -3,10 +3,15 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"framer/internal/core"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/go-chi/httplog/v2"
 )
 
 var ApiClient = NewClient("http://localhost:" + os.Getenv("PORT"))
@@ -87,4 +92,28 @@ func (c *Client) Request(method, path string, reqBody, resBody interface{}) (int
 	}
 
 	return resp.StatusCode, nil
+}
+
+type ValidationError error
+
+func NewValidationError(val string) ValidationError {
+	return errors.New(val)
+}
+
+func HandleError(r *http.Request, w http.ResponseWriter, err error) {
+	switch e := err.(type) {
+	case ValidationError:
+		w.Write([]byte(e.Error()))
+	default:
+		GetLogger(r).Error(err.Error())
+		if os.Getenv("APP_ENV") == string(core.Development) {
+			w.Write([]byte(err.Error()))
+		} else {
+			w.Write([]byte("Internal server error"))
+		}
+	}
+}
+
+func GetLogger(r *http.Request) *slog.Logger {
+	return httplog.LogEntry(r.Context())
 }

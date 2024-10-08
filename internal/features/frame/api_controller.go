@@ -2,7 +2,7 @@ package frame
 
 import (
 	"encoding/json"
-	"framer/internal/core"
+	"framer/internal/api"
 	"framer/internal/database"
 	"net/http"
 	"time"
@@ -61,13 +61,13 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	fs, err := database.Service.GetFrame(ctx, uuid.MustParse(chi.URLParam(r, "id")))
 	if err != nil {
-		core.HandleError(w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 
 	e, err := toEntity(fs)
 	if err != nil {
-		core.HandleError(w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 
@@ -77,7 +77,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 
 	response, err := json.Marshal(dto)
 	if err != nil {
-		core.HandleError(w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 
@@ -93,7 +93,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 	fs, err := database.Service.GetFrames(r.Context())
 	if err != nil {
-		core.HandleError(w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 	entities := funk.Map(fs, toEntity)
@@ -104,7 +104,7 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 
 	response, err := json.Marshal(dtos)
 	if err != nil {
-		core.HandleError(w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 	w.Write(response)
@@ -113,7 +113,7 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 	body := &postFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		core.HandleError(w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 }

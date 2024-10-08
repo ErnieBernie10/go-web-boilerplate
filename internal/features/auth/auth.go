@@ -1,17 +1,24 @@
 package auth
 
 import (
-	"context"
-	"net/http"
+	"errors"
 	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
-const TokenContextKey = "Token"
-const RefreshContextKey = "Refresh"
+type Token string
+
+const TokenContextKey Token = "Token"
+const RefreshContextKey Token = "Refresh"
 
 var JwtSecret = []byte(os.Getenv("JWT_SECRET"))
+
+var (
+	ErrInvalidLogin = errors.New("invalid username or password")
+)
 
 type Claims struct {
 	Email string `json:"username"`
@@ -21,70 +28,45 @@ type Claims struct {
 func (c *Claims) Valid() error {
 	return nil
 }
-func AuthGuardMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Step 1: Get the JWT token from the "token" cookie.
-		cookie, err := r.Cookie("token")
-		if err != nil {
-			if err == http.ErrNoCookie {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-				return
-			}
-			http.Error(w, "Bad request", http.StatusBadRequest)
-			return
-		}
-		tokenStr := cookie.Value
 
-		// Step 2: Parse and validate the JWT token.
-		claims := &Claims{}
-		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return JwtSecret, nil
-		})
-		if err != nil || !token.Valid {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		// Step 3: Store the user information in the request context.
-		ctx := context.WithValue(r.Context(), TokenContextKey, claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func OptionalUserMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Step 1: Get the JWT token from the "token" cookie.
-		cookie, err := r.Cookie(TokenContextKey)
-		if err != nil {
-			ctx := context.WithValue(r.Context(), TokenContextKey, nil)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
-		tokenStr := cookie.Value
-
-		// Step 2: Parse and validate the JWT token.
-		claims := &Claims{}
-		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return JwtSecret, nil
-		})
-		if err != nil || !token.Valid {
-			ctx := context.WithValue(r.Context(), TokenContextKey, nil)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
-
-		// Step 3: Store the user information in the request context.
-		ctx := context.WithValue(r.Context(), TokenContextKey, claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func GetUser(r *http.Request) *Claims {
-	user, ok := r.Context().Value(TokenContextKey).(*Claims)
-
-	if !ok {
-		return nil
+func login(email, password, hash string) (string, string, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		return "", "", ErrInvalidLogin
 	}
 
-	return user
+	expirationTime := time.Now().Add(5 * time.Minute) // Set token expiration time.
+	claims := &Claims{
+		Email: email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	refreshClaim := &Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	// Create the JWT using the claims and the secret key.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaim)
+
+	tokenString, err := token.SignedString(JwtSecret)
+	if err != nil {
+		return "", "", ErrInvalidLogin
+	}
+
+	refreshTokenString, err := refresh.SignedString(JwtSecret)
+	if err != nil {
+		return "", "", ErrInvalidLogin
+	}
+
+	return tokenString, refreshTokenString, nil
+}
+
+func hashString(password string) ([]byte, error) {
+
+	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 }

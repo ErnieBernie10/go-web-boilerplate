@@ -2,7 +2,6 @@ package frame
 
 import (
 	"fmt"
-	"framer/internal/core"
 	"time"
 	"unicode/utf8"
 
@@ -49,11 +48,11 @@ func New(id, userId uuid.UUID, title, description string, frameStatus int32, cre
 
 func Validate(title string, description string, frameStatus int32) error {
 	if utf8.RuneCountInString(title) > TitleMaxLength {
-		return core.NewValidationError(fmt.Sprintf("Title may not be longer than %d", TitleMaxLength))
+		return fmt.Errorf("Title may not be longer than %d", TitleMaxLength)
 	}
 
 	if utf8.RuneCountInString(description) > DescriptionMaxLength {
-		return core.NewValidationError(fmt.Sprintf("Description may not be longer than %d", DescriptionMaxLength))
+		return fmt.Errorf("Description may not be longer than %d", DescriptionMaxLength)
 	}
 
 	return nil

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/pingcap/log"
 )
 
 var email = "email"
@@ -64,7 +63,6 @@ func handlePostRegister(w http.ResponseWriter, r *http.Request) {
 			Email:    email,
 			Password: pw,
 		}, nil); err != nil {
-
 		switch status {
 		case http.StatusBadRequest:
 			view.Message(view.Error, "User with E-mail already exists").Render(r.Context(), w)
@@ -81,7 +79,8 @@ func handlePostRegister(w http.ResponseWriter, r *http.Request) {
 
 func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Unable to parse form", http.StatusBadRequest)
+		view.Message(view.Error, "Unable to parse form").Render(r.Context(), w)
+		view.GetLogger(r).Error(err.Error())
 		return
 	}
 
@@ -96,18 +95,16 @@ func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 	}, &response); err != nil {
 		switch status {
 		case http.StatusUnauthorized:
-			layout.Unauthenticated(
-				view.RegisterPath,
-				view.LoginPath,
-				loginPage(view.NewMessage("E-mail or password do not match", view.Error))).Render(r.Context(), w)
+			view.Message(view.Error, "E-mail or password do not match").Render(r.Context(), w)
+			return
 		}
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Error(err.Error())
+		view.Message(view.Error, "Something went wrong").Render(r.Context(), w)
+		view.GetLogger(r).Error(err.Error())
 	}
 
 	// Step 3: Set the JWT token in an HTTP-only cookie.
 	http.SetCookie(w, &http.Cookie{
-		Name:     TokenContextKey,               // Cookie name
+		Name:     string(TokenContextKey),       // Cookie name
 		Value:    response.AccessToken,          // JWT token value
 		Expires:  time.Now().Add(time.Hour * 1), // Cookie expiration time (same as JWT)
 		HttpOnly: true,                          // Make the cookie HTTP-only
@@ -116,7 +113,7 @@ func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     RefreshContextKey,              // Cookie name
+		Name:     string(RefreshContextKey),      // Cookie name
 		Value:    response.RefreshToken,          // JWT token value
 		Expires:  time.Now().Add(time.Hour * 72), // Cookie expiration time (same as JWT)
 		HttpOnly: true,                           // Make the cookie HTTP-only

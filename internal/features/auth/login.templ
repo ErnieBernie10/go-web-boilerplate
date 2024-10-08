@@ -2,9 +2,9 @@ package auth
 
 import "framer/internal/view"
 
-templ loginPage(err ...view.MessageViewModel) {
+templ loginPage() {
 	<div class="mt-4">
-		<form class="box" hx-post={ view.LoginPath } hx-indicator=".button">
+		<form class="box" hx-target=".msg" hx-post={ view.LoginPath } hx-indicator=".button">
 			<div class="field">
 				<label class="label" for={ email }>Email</label>
 				<div class="control has-icons-left has-icons-right">
@@ -20,6 +20,7 @@ templ loginPage(err ...view.MessageViewModel) {
 				</div>
 			</div>
 			<button type="submit" class="button is-primary">Sign in</button>
+			<div class="msg"></div>
 		</form>
 	</div>
 }

@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"framer/internal/api"
 	"framer/internal/database"
 	"net/http"
@@ -18,18 +19,18 @@ func AuthApiResourceHandler(r chi.Router) {
 func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 	body := &loginCommandDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, err, http.StatusInternalServerError)
 		return
 	}
 
 	user, err := database.Service.GetUserByEmail(r.Context(), body.Email)
 	if err != nil {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		api.HandleError(r, w, fmt.Errorf("invalid username or password"), http.StatusUnauthorized)
 		return
 	}
 
 	if !user.PasswordHash.Valid {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		api.HandleError(r, w, fmt.Errorf("invalid username or password"), http.StatusUnauthorized)
 		return
 	}
 
@@ -40,7 +41,7 @@ func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		api.HandleError(r, w, fmt.Errorf("invalid username or password"), http.StatusUnauthorized)
 		return
 	}
 
@@ -50,7 +51,7 @@ func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -61,18 +62,19 @@ func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 func handleApiPostRegister(w http.ResponseWriter, r *http.Request) {
 	body := &registerCommandDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, err, http.StatusInternalServerError)
+		return
 	}
 
 	_, err := database.Service.GetUserByEmail(r.Context(), body.Email)
 	if err == nil {
-		http.Error(w, "User with e-mail already exists", http.StatusBadRequest)
+		api.HandleError(r, w, fmt.Errorf("user with e-mail already exists"), http.StatusBadRequest)
 		return
 	}
 
 	hashedPassword, err := hashString(body.Password)
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		api.HandleError(r, w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -80,7 +82,7 @@ func handleApiPostRegister(w http.ResponseWriter, r *http.Request) {
 		Email:        body.Email,
 		PasswordHash: sql.NullString{Valid: true, String: string(hashedPassword)},
 	}); err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		api.HandleError(r, w, err, http.StatusInternalServerError)
 		return
 	}
 

@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"framer/internal/core"
 	"io"
@@ -94,23 +93,17 @@ func (c *Client) Request(method, path string, reqBody, resBody interface{}) (int
 	return resp.StatusCode, nil
 }
 
-type ValidationError error
-
-func NewValidationError(val string) ValidationError {
-	return errors.New(val)
-}
-
-func HandleError(r *http.Request, w http.ResponseWriter, err error) {
-	switch e := err.(type) {
-	case ValidationError:
-		w.Write([]byte(e.Error()))
-	default:
+func HandleError(r *http.Request, w http.ResponseWriter, err error, statusCode int) {
+	switch statusCode {
+	case http.StatusInternalServerError:
 		GetLogger(r).Error(err.Error())
 		if os.Getenv("APP_ENV") == string(core.Development) {
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), statusCode)
 		} else {
-			w.Write([]byte("Internal server error"))
+			http.Error(w, "Internal server error", statusCode)
 		}
+	default:
+		http.Error(w, err.Error(), statusCode)
 	}
 }
 

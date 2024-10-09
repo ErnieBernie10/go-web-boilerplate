@@ -8,6 +8,7 @@ build:
 	@echo "Building..."
 	
 	
+	@make swag
 	@templ generate
 	@go build -o main cmd/api/main.go
 

@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"framer/internal/api"
 	"framer/internal/database"
+	"framer/internal/util"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/thoas/go-funk"
 )
 
 func FrameResourceHandler(r chi.Router) {
-	r.Get("/frame", getFramesHandler)
-	r.Get("/frame/{id}", getFrameHandler)
-	r.Post("/frame", postFrameHandler)
+	r.Get("/api/frame", getFramesHandler)
+	r.Get("/api/frame/{id}", getFrameHandler)
+	r.Post("/api/frame", postFrameHandler)
 }
 
 type getFrameDto struct {
@@ -47,7 +47,13 @@ func toDto(entity *Model) *getFrameDto {
 }
 
 func toEntity(dbModel database.Frame) (*Model, error) {
-	return New(dbModel.ID, dbModel.UserID, dbModel.Title, dbModel.Description, dbModel.FrameStatus, dbModel.CreatedAt, dbModel.ModifiedAt)
+	return New(dbModel.ID,
+		dbModel.UserID,
+		dbModel.Title,
+		dbModel.Description,
+		dbModel.FrameStatus,
+		dbModel.CreatedAt,
+		dbModel.ModifiedAt)
 }
 
 // @Summary Get Frame
@@ -56,28 +62,27 @@ func toEntity(dbModel database.Frame) (*Model, error) {
 // @Produce json
 // @Param id path string true "Frame Id"
 // @Success 200
-// @Router /frame/{id} [get]
+// @Router /api/frame/{id} [get]
 func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	fs, err := database.Service.GetFrame(ctx, uuid.MustParse(chi.URLParam(r, "id")))
+	e, err := database.Service.GetFrame(ctx, uuid.MustParse(chi.URLParam(r, "id")))
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, err, http.StatusBadRequest)
 		return
 	}
-
-	e, err := toEntity(fs)
-	if err != nil {
-		api.HandleError(r, w, err)
-		return
+	dto := &getFrameDto{
+		ID:          e.ID,
+		Title:       e.Title,
+		Description: e.Description,
+		CreatedAt:   e.CreatedAt,
+		ModifiedAt:  e.ModifiedAt,
+		UserID:      e.UserID,
+		FrameStatus: int(e.FrameStatus),
 	}
-
-	// DO LOGIC HERE
-
-	dto := toDto(e)
 
 	response, err := json.Marshal(dto)
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -89,31 +94,38 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Success 200
-// @Router /frame [get]
 func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 	fs, err := database.Service.GetFrames(r.Context())
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, err, http.StatusBadRequest)
 		return
 	}
-	entities := funk.Map(fs, toEntity)
 
-	// DO LOGIC HERE
+	dtos := util.Map(fs, func(e database.Frame) *getFrameDto {
+		return &getFrameDto{
+			ID:          e.ID,
+			Title:       e.Title,
+			Description: e.Description,
+			CreatedAt:   e.CreatedAt,
+			ModifiedAt:  e.ModifiedAt,
+			UserID:      e.UserID,
+			FrameStatus: int(e.FrameStatus),
+		}
+	})
 
-	dtos := funk.Map(entities, toDto)
-
-	response, err := json.Marshal(dtos)
+	jsonStr, err := json.Marshal(dtos)
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, err, http.StatusInternalServerError)
 		return
 	}
-	w.Write(response)
+
+	w.Write(jsonStr)
 }
 
 func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 	body := &postFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, err, http.StatusInternalServerError)
 		return
 	}
 }

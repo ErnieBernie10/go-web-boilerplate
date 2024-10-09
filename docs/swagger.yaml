@@ -1,18 +1,7 @@
 info:
   contact: {}
 paths:
-  /frame:
-    get:
-      consumes:
-      - application/json
-      description: Get Frames for logged in user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      summary: Get Frames
-  /frame/{id}:
+  /api/frame/{id}:
     get:
       consumes:
       - application/json

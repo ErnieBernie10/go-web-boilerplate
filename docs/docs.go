@@ -15,24 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/frame": {
-            "get": {
-                "description": "Get Frames for logged in user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Get Frames",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/frame/{id}": {
+        "/api/frame/{id}": {
             "get": {
                 "description": "Get Frame by id",
                 "consumes": [

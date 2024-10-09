@@ -13,3 +13,4 @@ RUN go install github.com/air-verse/air@latest
 RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 RUN go install github.com/amacneil/dbmate@latest
 RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN go install github.com/swaggo/swag/cmd/swag@latest

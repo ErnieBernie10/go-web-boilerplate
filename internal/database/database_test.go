@@ -9,12 +9,15 @@ import (
 
 	"github.com/amacneil/dbmate/v2/pkg/dbmate"
 	_ "github.com/amacneil/dbmate/v2/pkg/driver/postgres"
+	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 var dbContainer *postgres.PostgresContainer
+
+var userID uuid.UUID
 
 func mustStartPostgresContainer() (func(context.Context) error, error) {
 	var (
@@ -71,6 +74,8 @@ func TestMain(m *testing.M) {
 		log.Fatalf("could not start postgres container: %v", err)
 	}
 
+	NewDb(dbContainer.MustConnectionString(context.Background()))
+	Seed()
 	m.Run()
 
 	if teardown != nil && teardown(context.Background()) != nil {
@@ -86,7 +91,6 @@ func TestNew(t *testing.T) {
 }
 
 func TestHealth(t *testing.T) {
-	NewDb(dbContainer.MustConnectionString(context.Background()))
 
 	stats := Health()
 
@@ -103,17 +107,15 @@ func TestHealth(t *testing.T) {
 	}
 }
 
-func TestClose(t *testing.T) {
-	NewDb(dbContainer.MustConnectionString(context.Background()))
-
-	Shutdown()
-}
-
 func TestGetFrames(t *testing.T) {
 	ctx := context.Background()
-	NewDb(dbContainer.MustConnectionString(ctx))
 
-	_, err := Service.db.ExecContext(ctx, "insert into frame (title, description) values ('Test', 'Test');")
+	_, err := Service.SaveFrame(ctx, SaveFrameParams{
+		Title:       "Test",
+		Description: "Test",
+		UserID:      userID,
+		FrameStatus: 1,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -69,11 +69,20 @@ func (q *Queries) GetFrames(ctx context.Context) ([]Frame, error) {
 }
 
 const saveFrame = `-- name: SaveFrame :one
-insert into frame (id, title, description, created_at)
-values ($1, $2, $3, NOW()) on conflict (id) DO
+insert into frame (
+    id,
+    title,
+    description,
+    created_at,
+    user_id,
+    frame_status
+  )
+values ($1, $2, $3, NOW(), $4, $5) on conflict (id) DO
 UPDATE
 set title = $2,
   description = $3,
+  user_id = $4,
+  frame_status = $5,
   modified_at = NOW()
 RETURNING id
 `
@@ -82,10 +91,18 @@ type SaveFrameParams struct {
 	ID          uuid.UUID
 	Title       string
 	Description string
+	UserID      uuid.UUID
+	FrameStatus int32
 }
 
 func (q *Queries) SaveFrame(ctx context.Context, arg SaveFrameParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, saveFrame, arg.ID, arg.Title, arg.Description)
+	row := q.db.QueryRowContext(ctx, saveFrame,
+		arg.ID,
+		arg.Title,
+		arg.Description,
+		arg.UserID,
+		arg.FrameStatus,
+	)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err

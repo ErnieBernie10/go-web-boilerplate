@@ -18,7 +18,7 @@ func FrameResourceHandler(r chi.Router) {
 	r.Post("/api/frame", postFrameHandler)
 }
 
-type getFrameDto struct {
+type GetFrameDto struct {
 	ID          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"Description"`
@@ -34,8 +34,8 @@ type postFrameDto struct {
 	UserId      string `json:"userId"`
 }
 
-func toDto(entity *Model) *getFrameDto {
-	return &getFrameDto{
+func toDto(entity *Model) *GetFrameDto {
+	return &GetFrameDto{
 		ID:          entity.ID,
 		Title:       string(entity.Title),
 		Description: string(entity.Description),
@@ -70,7 +70,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 		api.HandleError(r, w, err, http.StatusBadRequest)
 		return
 	}
-	dto := &getFrameDto{
+	dto := &GetFrameDto{
 		ID:          e.ID,
 		Title:       e.Title,
 		Description: e.Description,
@@ -94,6 +94,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Success 200
+// @Router /api/frame [get]
 func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 	fs, err := database.Service.GetFrames(r.Context())
 	if err != nil {
@@ -101,8 +102,8 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dtos := util.Map(fs, func(e database.Frame) *getFrameDto {
-		return &getFrameDto{
+	dtos := util.Map(fs, func(e database.Frame) *GetFrameDto {
+		return &GetFrameDto{
 			ID:          e.ID,
 			Title:       e.Title,
 			Description: e.Description,

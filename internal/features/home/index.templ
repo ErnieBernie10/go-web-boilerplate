@@ -1,8 +1,8 @@
 package home
 
-import "framer/internal/features/auth"
+import "framer/internal/pkg"
 
-templ indexPage(user *auth.Claims) {
+templ indexPage(user *pkg.Claims) {
 	<header>
 		if user != nil {
 			hello { user.Email }

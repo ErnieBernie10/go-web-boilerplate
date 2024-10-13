@@ -1,6 +1,17 @@
 info:
   contact: {}
 paths:
+  /api/frame:
+    get:
+      consumes:
+      - application/json
+      description: Get Frames for logged in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Get Frames
   /api/frame/{id}:
     get:
       consumes:

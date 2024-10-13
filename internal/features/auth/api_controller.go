@@ -13,13 +13,23 @@ import (
 
 func AuthApiResourceHandler(r chi.Router) {
 	r.Post(api.LoginApiPath, handleApiPostLogin)
+	r.Post(api.RefreshApiPath, handleApiPostRefresh)
 	r.Post(api.RegisterApiPath, handleApiPostRegister)
+}
+
+func handleApiPostRefresh(w http.ResponseWriter, r *http.Request) {
+	body := &api.LoginResponseDto{}
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		api.HandleError(r, w, err, http.StatusBadRequest)
+		return
+	}
+
 }
 
 func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 	body := &loginCommandDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
+		api.HandleError(r, w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -45,7 +55,7 @@ func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encoded, err := json.Marshal(&loginResponseDto{
+	encoded, err := json.Marshal(&api.LoginResponseDto{
 		AccessToken:  tokenString,
 		RefreshToken: refreshTokenString,
 	})
@@ -92,11 +102,6 @@ func handleApiPostRegister(w http.ResponseWriter, r *http.Request) {
 type loginCommandDto struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
-}
-
-type loginResponseDto struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
 }
 
 type registerCommandDto struct {

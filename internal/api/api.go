@@ -26,6 +26,11 @@ type Client struct {
 	baseURL    string
 }
 
+type LoginResponseDto struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 // NewClient creates a new instance of Client with the specified baseURL
 func NewClient(baseURL string) *Client {
 	return &Client{
@@ -39,8 +44,12 @@ func (c *Client) SetHTTPClient(client HTTPClient) {
 	c.httpClient = client
 }
 
+func isHttpError(resp int) bool {
+	return resp < http.StatusOK || resp >= http.StatusBadRequest
+}
+
 // Request makes an HTTP request with the given method, path, request payload, and response struct
-func (c *Client) Request(method, path string, reqBody, resBody interface{}) (int, error) {
+func (c *Client) Request(method, path string, reqBody, resBody interface{}, getTokens ...func() (string, string)) (int, error) {
 	// Create a new request URL using the base URL and path
 	url := c.baseURL + path
 
@@ -60,6 +69,13 @@ func (c *Client) Request(method, path string, reqBody, resBody interface{}) (int
 		return http.StatusInternalServerError, fmt.Errorf("failed to create request: %w", err)
 	}
 
+	refreshToken := ""
+	accessToken := ""
+	if len(getTokens) > 0 {
+		accessToken, refreshToken = getTokens[0]()
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+	}
+
 	// Set the content type header for JSON
 	req.Header.Set("Content-Type", "application/json")
 
@@ -76,7 +92,17 @@ func (c *Client) Request(method, path string, reqBody, resBody interface{}) (int
 		return resp.StatusCode, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+	if isHttpError(resp.StatusCode) {
+		refreshResponse := &LoginResponseDto{}
+		if resp.StatusCode == http.StatusUnauthorized {
+			_, err := c.Request("POST", RefreshApiPath, &LoginResponseDto{
+				AccessToken:  accessToken,
+				RefreshToken: refreshToken,
+			}, refreshResponse)
+			if err != nil || isHttpError(resp.StatusCode) {
+				return http.StatusUnauthorized, nil
+			}
+		}
 		// Return an error with the status and response body.
 		return resp.StatusCode, fmt.Errorf("request failed with status: %s, response: %s", resp.Status, respBody)
 	}

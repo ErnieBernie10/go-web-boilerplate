@@ -2,6 +2,7 @@ package auth
 
 import (
 	"framer/internal/api"
+	"framer/internal/pkg"
 	"framer/internal/view"
 	"framer/internal/view/layout"
 	"net/http"
@@ -22,7 +23,7 @@ func AuthResourceHandler(r chi.Router) {
 }
 
 func handleGetLogin(w http.ResponseWriter, r *http.Request) {
-	user := GetUser(r)
+	user := pkg.GetUser(r)
 
 	if user != nil {
 		http.Redirect(w, r, view.IndexPath, http.StatusSeeOther)
@@ -33,7 +34,7 @@ func handleGetLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGetRegister(w http.ResponseWriter, r *http.Request) {
-	user := GetUser(r)
+	user := pkg.GetUser(r)
 
 	if user != nil {
 		http.Redirect(w, r, view.IndexPath, http.StatusSeeOther)
@@ -87,7 +88,7 @@ func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue(email)
 	pw := r.FormValue(password)
 
-	response := loginResponseDto{}
+	response := api.LoginResponseDto{}
 
 	if status, err := api.ApiClient.Request("POST", api.LoginApiPath, loginCommandDto{
 		Email:    email,
@@ -104,7 +105,7 @@ func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Step 3: Set the JWT token in an HTTP-only cookie.
 	http.SetCookie(w, &http.Cookie{
-		Name:     string(TokenContextKey),       // Cookie name
+		Name:     string(pkg.TokenContextKey),   // Cookie name
 		Value:    response.AccessToken,          // JWT token value
 		Expires:  time.Now().Add(time.Hour * 1), // Cookie expiration time (same as JWT)
 		HttpOnly: true,                          // Make the cookie HTTP-only
@@ -113,7 +114,7 @@ func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     string(RefreshContextKey),      // Cookie name
+		Name:     string(pkg.RefreshContextKey),  // Cookie name
 		Value:    response.RefreshToken,          // JWT token value
 		Expires:  time.Now().Add(time.Hour * 72), // Cookie expiration time (same as JWT)
 		HttpOnly: true,                           // Make the cookie HTTP-only

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"framer/internal/pkg"
@@ -17,7 +18,6 @@ var (
 func refreshTokens(accessToken, refreshToken string) (string, string, error) {
 	expirationTime := time.Now().Add(5 * time.Minute) // Set token expiration time.
 	claims := &pkg.Claims{
-		Email: email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
@@ -46,7 +46,7 @@ func refreshTokens(accessToken, refreshToken string) (string, string, error) {
 	return tokenString, refreshTokenString, nil
 }
 
-func login(email, password, hash string) (string, string, error) {
+func login(id uuid.UUID, email, password, hash string) (string, string, error) {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	if err != nil {
 		return "", "", ErrInvalidLogin
@@ -55,6 +55,7 @@ func login(email, password, hash string) (string, string, error) {
 	expirationTime := time.Now().Add(5 * time.Minute) // Set token expiration time.
 	claims := &pkg.Claims{
 		Email: email,
+		ID:    id.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},

@@ -15,7 +15,7 @@ var JwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 type ContextKey string
 
-const UserContextKey ContextKey = "Token"
+const UserContextKey ContextKey = "User"
 const TokenContextKey ContextKey = "Token"
 const RefreshContextKey ContextKey = "Refresh"
 
@@ -122,6 +122,7 @@ func GetUser(r *http.Request) *Claims {
 
 type Claims struct {
 	Email string `json:"username"`
+	ID    string `json:"id"`
 	jwt.RegisteredClaims
 }
 

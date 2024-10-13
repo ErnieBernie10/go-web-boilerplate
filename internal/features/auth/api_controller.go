@@ -45,6 +45,7 @@ func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokenString, refreshTokenString, err := login(
+		user.ID,
 		body.Email,
 		body.Password,
 		user.PasswordHash.String,

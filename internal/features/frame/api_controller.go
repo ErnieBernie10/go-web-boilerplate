@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"framer/internal/api"
 	"framer/internal/database"
+	"framer/internal/pkg"
 	"framer/internal/util"
 	"net/http"
 	"time"
@@ -13,9 +14,9 @@ import (
 )
 
 func FrameResourceHandler(r chi.Router) {
-	r.Get("/api/frame", getFramesHandler)
-	r.Get("/api/frame/{id}", getFrameHandler)
-	r.Post("/api/frame", postFrameHandler)
+	r.Get(api.GetFramesApiPath, getFramesHandler)
+	r.Get(api.GetFrameApiPath, getFrameHandler)
+	r.Post(api.PostFrameApiPath, postFrameHandler)
 }
 
 type GetFrameDto struct {
@@ -123,10 +124,34 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonStr)
 }
 
+// @Summary Post Frame
+// @Description Post Frame
+// @Accept json
+// @Produce json
+// @Success 200
+// @Param frame body postFrameDto true "Frame data"
+// @Failure 400 {object} api.ErrorResponse
+// @Router /api/frame [post]
 func postFrameHandler(w http.ResponseWriter, r *http.Request) {
+	user := pkg.GetUser(r)
 	body := &postFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		api.HandleError(r, w, err, http.StatusInternalServerError)
 		return
 	}
+
+	id, err := database.Service.SaveFrame(r.Context(), database.SaveFrameParams{
+		ID:          uuid.New(),
+		Title:       body.Title,
+		Description: body.Description,
+		UserID:      uuid.MustParse(user.ID),
+		FrameStatus: int32(Active),
+	})
+
+	if err != nil {
+		api.HandleError(r, w, err, http.StatusInternalServerError)
+		return
+	}
+
+	pkg.WriteCreatedResponse(w, id, api.GetFramesApiPath)
 }

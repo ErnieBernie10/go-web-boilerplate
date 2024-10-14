@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"framer/internal/core"
 	"io"
@@ -118,18 +119,35 @@ func (c *Client) Request(method, path string, reqBody, resBody interface{}, getT
 
 	return resp.StatusCode, nil
 }
+func WriteJSONError(w http.ResponseWriter, statusCode int, err error) {
+	var errorResponse interface{}
+	if errs, ok := err.(interface{ Unwrap() []error }); ok {
+		var messages []string
+		for _, e := range errs.Unwrap() {
+			messages = append(messages, e.Error())
+		}
+		errorResponse = map[string][]string{"errors": messages}
+	} else {
+		errorResponse = map[string]string{"error": err.Error()}
+	}
+	errorJSON, _ := json.Marshal(errorResponse)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(errorJSON)
+}
 
 func HandleError(r *http.Request, w http.ResponseWriter, err error, statusCode int) {
+
 	switch statusCode {
 	case http.StatusInternalServerError:
 		GetLogger(r).Error(err.Error())
 		if os.Getenv("APP_ENV") == string(core.Development) {
-			http.Error(w, err.Error(), statusCode)
+			WriteJSONError(w, statusCode, err)
 		} else {
-			http.Error(w, "Internal server error", statusCode)
+			WriteJSONError(w, statusCode, errors.New("internal server error"))
 		}
 	default:
-		http.Error(w, err.Error(), statusCode)
+		WriteJSONError(w, statusCode, err)
 	}
 }
 

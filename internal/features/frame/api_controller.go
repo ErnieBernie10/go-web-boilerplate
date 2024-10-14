@@ -22,7 +22,7 @@ func FrameResourceHandler(r chi.Router) {
 type GetFrameDto struct {
 	ID          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`
-	Description string    `json:"Description"`
+	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"createdAt"`
 	ModifiedAt  time.Time `json:"modifiedAt"`
 	UserID      uuid.UUID `json:"userId"`
@@ -32,29 +32,6 @@ type GetFrameDto struct {
 type postFrameDto struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	UserId      string `json:"userId"`
-}
-
-func toDto(entity *Model) *GetFrameDto {
-	return &GetFrameDto{
-		ID:          entity.ID,
-		Title:       string(entity.Title),
-		Description: string(entity.Description),
-		CreatedAt:   entity.CreatedAt,
-		ModifiedAt:  entity.ModifiedAt,
-		UserID:      entity.UserID,
-		FrameStatus: int(entity.FrameStatus),
-	}
-}
-
-func toEntity(dbModel database.Frame) (*Model, error) {
-	return New(dbModel.ID,
-		dbModel.UserID,
-		dbModel.Title,
-		dbModel.Description,
-		dbModel.FrameStatus,
-		dbModel.CreatedAt,
-		dbModel.ModifiedAt)
 }
 
 // @Summary Get Frame
@@ -140,12 +117,18 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	entity, err := fromDto(body, user.ID)
+	if err != nil {
+		api.HandleError(r, w, err, http.StatusBadRequest)
+		return
+	}
+
 	id, err := database.Service.SaveFrame(r.Context(), database.SaveFrameParams{
-		ID:          uuid.New(),
-		Title:       body.Title,
-		Description: body.Description,
-		UserID:      uuid.MustParse(user.ID),
-		FrameStatus: int32(Active),
+		ID:          entity.ID,
+		Title:       string(entity.Title),
+		Description: string(entity.Description),
+		UserID:      entity.UserID,
+		FrameStatus: int32(entity.FrameStatus),
 	})
 
 	if err != nil {

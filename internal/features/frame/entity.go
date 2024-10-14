@@ -1,6 +1,7 @@
 package frame
 
 import (
+	"errors"
 	"fmt"
 	"time"
 	"unicode/utf8"
@@ -30,30 +31,60 @@ type Model struct {
 	FrameStatus FrameStatus
 }
 
-func New(id, userId uuid.UUID, title, description string, frameStatus int32, createdAt, modifiedAt time.Time) (*Model, error) {
-	if err := Validate(title, description, frameStatus); err != nil {
-		return nil, err
+func CreateTitle(title string) (Title, error) {
+	if utf8.RuneCountInString(title) > TitleMaxLength {
+		return "", fmt.Errorf("title may not be longer than %d characters", TitleMaxLength)
+	}
+
+	return Title(title), nil
+}
+
+func CreateDescription(description string) (Description, error) {
+	if utf8.RuneCountInString(description) > DescriptionMaxLength {
+		return "", fmt.Errorf("description may not be longer than %d characters", DescriptionMaxLength)
+	}
+
+	return Description(description), nil
+}
+
+func CreateUserID(userId string) (uuid.UUID, error) {
+	id, err := uuid.Parse(userId)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid user id")
+	}
+
+	return id, nil
+}
+
+func fromDto(dto *postFrameDto, userIdString string) (*Model, error) {
+	var errs []error
+
+	title, err := CreateTitle(dto.Title)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	description, err := CreateDescription(dto.Description)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	userId, err := CreateUserID(userIdString)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
 	}
 
 	return &Model{
-		ID:          id,
-		Title:       Title(title),
-		Description: Description(description),
-		CreatedAt:   createdAt,
-		ModifiedAt:  modifiedAt,
+		ID:          uuid.New(),
+		Title:       title,
+		Description: description,
+		CreatedAt:   time.Now(),
+		ModifiedAt:  time.Now(),
 		UserID:      userId,
-		FrameStatus: FrameStatus(frameStatus),
+		FrameStatus: Active,
 	}, nil
-}
-
-func Validate(title string, description string, frameStatus int32) error {
-	if utf8.RuneCountInString(title) > TitleMaxLength {
-		return fmt.Errorf("title may not be longer than %d", TitleMaxLength)
-	}
-
-	if utf8.RuneCountInString(description) > DescriptionMaxLength {
-		return fmt.Errorf("description may not be longer than %d", DescriptionMaxLength)
-	}
-
-	return nil
 }

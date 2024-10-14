@@ -2,12 +2,14 @@ package auth
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
+	"framer/internal/core"
 	"framer/internal/pkg"
 )
 
@@ -17,6 +19,9 @@ var (
 
 func refreshTokens(accessToken, refreshToken string) (string, string, error) {
 	expirationTime := time.Now().Add(5 * time.Minute) // Set token expiration time.
+	if os.Getenv("APP_ENV") == string(core.Development) {
+		expirationTime = time.Now().Add(1 * time.Hour)
+	}
 	claims := &pkg.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),

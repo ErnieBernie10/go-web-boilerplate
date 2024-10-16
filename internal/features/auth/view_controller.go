@@ -90,10 +90,12 @@ func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 
 	response := api.LoginResponseDto{}
 
-	if status, err := api.ApiClient.Request("POST", api.LoginApiPath, loginCommandDto{
+	status, err := api.ApiClient.Request("POST", api.LoginApiPath, loginCommandDto{
 		Email:    email,
 		Password: pw,
-	}, &response); err != nil {
+	}, &response)
+
+	if err != nil {
 		switch status {
 		case http.StatusUnauthorized:
 			view.Message(view.Error, "E-mail or password do not match").Render(r.Context(), w)

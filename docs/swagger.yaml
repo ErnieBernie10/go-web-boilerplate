@@ -1,3 +1,11 @@
+definitions:
+  frame.postFrameDto:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -12,6 +20,23 @@ paths:
         "200":
           description: OK
       summary: Get Frames
+    post:
+      consumes:
+      - application/json
+      description: Post Frame
+      parameters:
+      - description: Frame data
+        in: body
+        name: frame
+        required: true
+        schema:
+          $ref: '#/definitions/frame.postFrameDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Post Frame
   /api/frame/{id}:
     get:
       consumes:

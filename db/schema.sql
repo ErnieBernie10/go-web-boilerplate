@@ -40,7 +40,7 @@ CREATE TABLE public.frame (
     description text DEFAULT ''::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     modified_at timestamp with time zone DEFAULT now() NOT NULL,
-    user_id uuid NOT NULL,
+    user_id character varying(50) NOT NULL,
     frame_status integer NOT NULL
 );
 

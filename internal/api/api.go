@@ -101,7 +101,7 @@ func (c *Client) Request(method, path string, reqBody, resBody interface{}, getT
 				RefreshToken: refreshToken,
 			}, refreshResponse)
 			if err != nil || isHttpError(resp.StatusCode) {
-				return http.StatusUnauthorized, nil
+				return http.StatusUnauthorized, fmt.Errorf("unauthorized: %w", err)
 			}
 		}
 		// Return an error with the status and response body.

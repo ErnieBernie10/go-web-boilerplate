@@ -107,7 +107,6 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Success 200
 // @Param frame body postFrameDto true "Frame data"
-// @Failure 400 {object} api.ErrorResponse
 // @Router /api/frame [post]
 func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 	user := pkg.GetUser(r)

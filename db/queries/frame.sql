@@ -1,10 +1,10 @@
 -- name: GetFrame :one
 select *
 from frame
-where id = $1;
+where id = $1 and user_id = $2;
 -- name: GetFrames :many
 select *
-from frame;
+from frame where user_id = $1;
 -- name: SaveFrame :one
 insert into frame (
     id,

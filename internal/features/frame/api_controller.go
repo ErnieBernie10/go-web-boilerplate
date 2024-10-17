@@ -17,6 +17,7 @@ func FrameResourceHandler(r chi.Router) {
 	r.Get(api.GetFramesApiPath, getFramesHandler)
 	r.Get(api.GetFrameApiPath, getFrameHandler)
 	r.Post(api.PostFrameApiPath, postFrameHandler)
+	r.Put(api.PutFrameApiPath, putFrameHandler)
 }
 
 type GetFrameDto struct {
@@ -29,7 +30,7 @@ type GetFrameDto struct {
 	FrameStatus int       `json:"frameStatus"`
 }
 
-type postFrameDto struct {
+type saveFrameDto struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 }
@@ -43,11 +44,23 @@ type postFrameDto struct {
 // @Router /api/frame/{id} [get]
 func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	e, err := database.Service.GetFrame(ctx, uuid.MustParse(chi.URLParam(r, "id")))
+	user := pkg.GetUser(r)
+
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		api.HandleError(r, w, err, http.StatusBadRequest)
+	}
+
+	e, err := database.Service.GetFrame(ctx, database.GetFrameParams{
+		ID:     id,
+		UserID: user.ID,
+	})
+
+	if err != nil {
+		api.HandleDbError(r, w, err)
 		return
 	}
+
 	dto := &GetFrameDto{
 		ID:          e.ID,
 		Title:       e.Title,
@@ -74,7 +87,8 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 200
 // @Router /api/frame [get]
 func getFramesHandler(w http.ResponseWriter, r *http.Request) {
-	fs, err := database.Service.GetFrames(r.Context())
+	user := pkg.GetUser(r)
+	fs, err := database.Service.GetFrames(r.Context(), user.ID)
 	if err != nil {
 		api.HandleError(r, w, err, http.StatusBadRequest)
 		return
@@ -101,6 +115,60 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonStr)
 }
 
+// @Summary Put Frame
+// @Description Put Frame
+// @Accept json
+// @Produce json
+// @Success 200
+// @Param frame body postFrameDto true "Frame data"
+// @Router /api/frame [put]
+func putFrameHandler(w http.ResponseWriter, r *http.Request) {
+	user := pkg.GetUser(r)
+	body := &saveFrameDto{}
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		api.HandleError(r, w, err, http.StatusInternalServerError)
+		return
+	}
+
+	idParam := chi.URLParam(r, "id")
+
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		api.HandleError(r, w, err, http.StatusBadRequest)
+		return
+	}
+
+	_, err = database.Service.GetFrame(r.Context(), database.GetFrameParams{
+		ID:     id,
+		UserID: user.ID,
+	})
+	if err != nil {
+		api.HandleDbError(r, w, err)
+		return
+	}
+
+	entity, err := fromDto(body, user.ID)
+	if err != nil {
+		api.HandleError(r, w, err, http.StatusBadRequest)
+		return
+	}
+
+	id, err = database.Service.SaveFrame(r.Context(), database.SaveFrameParams{
+		ID:          entity.ID,
+		Title:       string(entity.Title),
+		Description: string(entity.Description),
+		FrameStatus: int32(entity.FrameStatus),
+		UserID:      user.ID,
+	})
+
+	if err != nil {
+		api.HandleError(r, w, err, http.StatusInternalServerError)
+		return
+	}
+
+	pkg.WriteUpdatedResponse(w, id, api.GetFrameApiPath)
+}
+
 // @Summary Post Frame
 // @Description Post Frame
 // @Accept json
@@ -110,7 +178,7 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 // @Router /api/frame [post]
 func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 	user := pkg.GetUser(r)
-	body := &postFrameDto{}
+	body := &saveFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		api.HandleError(r, w, err, http.StatusInternalServerError)
 		return

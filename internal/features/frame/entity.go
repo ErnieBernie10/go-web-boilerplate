@@ -56,7 +56,7 @@ func CreateUserID(userId string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func fromDto(dto *postFrameDto, userIdString string) (*Model, error) {
+func fromDto(dto *saveFrameDto, userId uuid.UUID) (*Model, error) {
 	var errs []error
 
 	title, err := CreateTitle(dto.Title)
@@ -65,11 +65,6 @@ func fromDto(dto *postFrameDto, userIdString string) (*Model, error) {
 	}
 
 	description, err := CreateDescription(dto.Description)
-	if err != nil {
-		errs = append(errs, err)
-	}
-
-	userId, err := CreateUserID(userIdString)
 	if err != nil {
 		errs = append(errs, err)
 	}

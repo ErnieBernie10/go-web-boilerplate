@@ -5,7 +5,8 @@ const (
 	RefreshApiPath  = "/api/auth/refresh"
 	RegisterApiPath = "/api/auth/register"
 
-	GetFramesApiPath = "/api/frame"
-	GetFrameApiPath  = "/api/frame/{id}"
-	PostFrameApiPath = "/api/frame"
+	GetFramesApiPath = "/api/frames"
+	GetFrameApiPath  = "/api/frames/{id}"
+	PostFrameApiPath = "/api/frames"
+	PutFrameApiPath  = "/api/frames/{id}"
 )

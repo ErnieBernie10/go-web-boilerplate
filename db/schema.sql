@@ -40,7 +40,7 @@ CREATE TABLE public.frame (
     description text DEFAULT ''::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     modified_at timestamp with time zone DEFAULT now() NOT NULL,
-    user_id character varying(50) NOT NULL,
+    user_id uuid NOT NULL,
     frame_status integer NOT NULL
 );
 
@@ -63,6 +63,14 @@ ALTER TABLE ONLY public.app_user
 
 
 --
+-- Name: app_user app_user_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_user
+    ADD CONSTRAINT app_user_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: frame frame_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -79,6 +87,14 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: frame frame_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.frame
+    ADD CONSTRAINT frame_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.app_user(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
@@ -88,5 +104,4 @@ ALTER TABLE ONLY public.schema_migrations
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
-    ('20240923075031'),
-    ('20241006092305');
+    ('20240923075031');

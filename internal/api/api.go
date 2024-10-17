@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -153,4 +154,12 @@ func HandleError(r *http.Request, w http.ResponseWriter, err error, statusCode i
 
 func GetLogger(r *http.Request) *slog.Logger {
 	return httplog.LogEntry(r.Context())
+}
+
+func HandleDbError(r *http.Request, w http.ResponseWriter, err error) {
+	if errors.Is(err, sql.ErrNoRows) {
+		HandleError(r, w, err, http.StatusNotFound)
+	} else {
+		HandleError(r, w, err, http.StatusInternalServerError)
+	}
 }

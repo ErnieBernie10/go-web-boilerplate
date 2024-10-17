@@ -14,11 +14,16 @@ import (
 const getFrame = `-- name: GetFrame :one
 select id, title, description, created_at, modified_at, user_id, frame_status
 from frame
-where id = $1
+where id = $1 and user_id = $2
 `
 
-func (q *Queries) GetFrame(ctx context.Context, id uuid.UUID) (Frame, error) {
-	row := q.db.QueryRowContext(ctx, getFrame, id)
+type GetFrameParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) GetFrame(ctx context.Context, arg GetFrameParams) (Frame, error) {
+	row := q.db.QueryRowContext(ctx, getFrame, arg.ID, arg.UserID)
 	var i Frame
 	err := row.Scan(
 		&i.ID,
@@ -34,11 +39,11 @@ func (q *Queries) GetFrame(ctx context.Context, id uuid.UUID) (Frame, error) {
 
 const getFrames = `-- name: GetFrames :many
 select id, title, description, created_at, modified_at, user_id, frame_status
-from frame
+from frame where user_id = $1
 `
 
-func (q *Queries) GetFrames(ctx context.Context) ([]Frame, error) {
-	rows, err := q.db.QueryContext(ctx, getFrames)
+func (q *Queries) GetFrames(ctx context.Context, userID uuid.UUID) ([]Frame, error) {
+	rows, err := q.db.QueryContext(ctx, getFrames, userID)
 	if err != nil {
 		return nil, err
 	}

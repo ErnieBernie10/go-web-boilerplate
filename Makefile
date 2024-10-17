@@ -25,8 +25,17 @@ docker-run:
 docker-down:
 	@docker compose down
 
-migrate:
-	@dbmate migrate
+migrate-create:
+	@dbmate create
+
+migrate-drop:
+	@dbmate drop
+
+migrate-up:
+	@dbmate up
+
+migrate-down:
+	@dbmate down
 
 generate:
 	@sqlc generate

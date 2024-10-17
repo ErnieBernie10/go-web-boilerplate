@@ -60,7 +60,7 @@ func login(id uuid.UUID, email, password, hash string) (string, string, error) {
 	expirationTime := time.Now().Add(5 * time.Minute) // Set token expiration time.
 	claims := &pkg.Claims{
 		Email: email,
-		ID:    id.String(),
+		ID:    id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},

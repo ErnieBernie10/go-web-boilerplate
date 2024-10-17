@@ -120,7 +120,7 @@ func TestGetFrames(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := Service.GetFrames(ctx)
+	res, err := Service.GetFrames(ctx, userID)
 	if err != nil {
 		t.Fatal(err)
 	}

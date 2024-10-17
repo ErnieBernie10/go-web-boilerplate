@@ -27,3 +27,10 @@ jobs:
           workdir: ./
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install templ
+        shell: bash
+        run: go install github.com/a-h/templ/cmd/templ@latest
+      - name: Run templ generate
+        shell: bash
+        run: templ generate -path .

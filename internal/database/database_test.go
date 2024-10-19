@@ -75,7 +75,10 @@ func TestMain(m *testing.M) {
 	}
 
 	NewDb(dbContainer.MustConnectionString(context.Background()))
-	Seed()
+	userID, err = Seed()
+	if err != nil {
+		log.Fatalf("could not seed user: %v", err)
+	}
 	m.Run()
 
 	if teardown != nil && teardown(context.Background()) != nil {

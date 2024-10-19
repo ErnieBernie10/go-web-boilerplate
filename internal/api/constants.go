@@ -9,4 +9,7 @@ const (
 	GetFrameApiPath  = "/api/frames/{id}"
 	PostFrameApiPath = "/api/frames"
 	PutFrameApiPath  = "/api/frames/{id}"
+
+	UploadFileApiPath   = "/api/file/{filename}"
+	DownloadFileApiPath = "/api/file/{id}"
 )

@@ -12,7 +12,7 @@ import (
 )
 
 const getFrame = `-- name: GetFrame :one
-select id, title, description, created_at, modified_at, user_id, frame_status
+select id, title, description, created_at, modified_at, user_id, frame_status, file_id
 from frame
 where id = $1 and user_id = $2
 `
@@ -33,12 +33,13 @@ func (q *Queries) GetFrame(ctx context.Context, arg GetFrameParams) (Frame, erro
 		&i.ModifiedAt,
 		&i.UserID,
 		&i.FrameStatus,
+		&i.FileID,
 	)
 	return i, err
 }
 
 const getFrames = `-- name: GetFrames :many
-select id, title, description, created_at, modified_at, user_id, frame_status
+select id, title, description, created_at, modified_at, user_id, frame_status, file_id
 from frame where user_id = $1
 `
 
@@ -59,6 +60,7 @@ func (q *Queries) GetFrames(ctx context.Context, userID uuid.UUID) ([]Frame, err
 			&i.ModifiedAt,
 			&i.UserID,
 			&i.FrameStatus,
+			&i.FileID,
 		); err != nil {
 			return nil, err
 		}
@@ -80,14 +82,16 @@ insert into frame (
     description,
     created_at,
     user_id,
-    frame_status
+    frame_status,
+    file_id
   )
-values ($1, $2, $3, NOW(), $4, $5) on conflict (id) DO
+values ($1, $2, $3, NOW(), $4, $5, $6) on conflict (id) DO
 UPDATE
 set title = $2,
   description = $3,
   user_id = $4,
   frame_status = $5,
+  file_id = $6,
   modified_at = NOW()
 RETURNING id
 `
@@ -98,6 +102,7 @@ type SaveFrameParams struct {
 	Description string
 	UserID      uuid.UUID
 	FrameStatus int32
+	FileID      uuid.NullUUID
 }
 
 func (q *Queries) SaveFrame(ctx context.Context, arg SaveFrameParams) (uuid.UUID, error) {
@@ -107,6 +112,7 @@ func (q *Queries) SaveFrame(ctx context.Context, arg SaveFrameParams) (uuid.UUID
 		arg.Description,
 		arg.UserID,
 		arg.FrameStatus,
+		arg.FileID,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

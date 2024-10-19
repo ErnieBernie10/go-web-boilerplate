@@ -25,6 +25,8 @@ type Model struct {
 	ID          uuid.UUID
 	Title       Title
 	Description Description
+	FileID      uuid.NullUUID
+	FileName    string
 	CreatedAt   time.Time
 	ModifiedAt  time.Time
 	UserID      uuid.UUID
@@ -56,7 +58,7 @@ func CreateUserID(userId string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func fromDto(dto *saveFrameDto, userId uuid.UUID) (*Model, error) {
+func fromDto(dto *saveFrameDto, userId uuid.UUID, id uuid.NullUUID) (*Model, error) {
 	var errs []error
 
 	title, err := CreateTitle(dto.Title)
@@ -73,13 +75,20 @@ func fromDto(dto *saveFrameDto, userId uuid.UUID) (*Model, error) {
 		return nil, errors.Join(errs...)
 	}
 
-	return &Model{
-		ID:          uuid.New(),
+	m := &Model{
 		Title:       title,
 		Description: description,
+		FileID:      dto.FileID,
+		FileName:    dto.FileName,
 		CreatedAt:   time.Now(),
 		ModifiedAt:  time.Now(),
 		UserID:      userId,
 		FrameStatus: Active,
-	}, nil
+	}
+
+	if id.Valid {
+		m.ID = id.UUID
+	}
+
+	return m, nil
 }

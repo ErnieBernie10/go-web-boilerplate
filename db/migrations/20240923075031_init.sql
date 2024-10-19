@@ -1,4 +1,12 @@
 -- migrate:up
+create table file (
+    id uuid not null default gen_random_uuid(),
+    file_name VARCHAR(255),
+    created_at timestamptz not null default now(),
+    modified_at timestamptz not null default now(),
+    PRIMARY KEY(id)
+);
+
 create table app_user (
   id uuid not null default gen_random_uuid(),
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -21,9 +29,12 @@ create table frame (
     modified_at timestamptz not null default now(),
     user_id uuid not null,
     frame_status integer not null,
+    file_id uuid,
     PRIMARY KEY(id),
-    FOREIGN KEY (user_id) REFERENCES app_user(id)
+    FOREIGN KEY (user_id) REFERENCES app_user(id),
+    FOREIGN KEY (file_id) REFERENCES file(id)
 );
 -- migrate:down
 drop table frame;
 drop table app_user;
+drop table file;

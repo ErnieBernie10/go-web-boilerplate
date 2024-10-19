@@ -31,6 +31,18 @@ CREATE TABLE public.app_user (
 
 
 --
+-- Name: file; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.file (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    file_name character varying(255),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    modified_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: frame; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -41,7 +53,8 @@ CREATE TABLE public.frame (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     modified_at timestamp with time zone DEFAULT now() NOT NULL,
     user_id uuid NOT NULL,
-    frame_status integer NOT NULL
+    frame_status integer NOT NULL,
+    file_id uuid
 );
 
 
@@ -71,6 +84,14 @@ ALTER TABLE ONLY public.app_user
 
 
 --
+-- Name: file file_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.file
+    ADD CONSTRAINT file_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: frame frame_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -84,6 +105,14 @@ ALTER TABLE ONLY public.frame
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: frame frame_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.frame
+    ADD CONSTRAINT frame_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.file(id);
 
 
 --

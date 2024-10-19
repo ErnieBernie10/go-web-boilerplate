@@ -9,7 +9,6 @@ build:
 	
 	
 	@templ generate
-	@make swag
 	@go build -o main cmd/api/main.go
 
 # Run the application

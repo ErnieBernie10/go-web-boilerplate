@@ -22,6 +22,13 @@ type AppUser struct {
 	ProviderUserID sql.NullString
 }
 
+type File struct {
+	ID         uuid.UUID
+	FileName   sql.NullString
+	CreatedAt  time.Time
+	ModifiedAt time.Time
+}
+
 type Frame struct {
 	ID          uuid.UUID
 	Title       string
@@ -30,6 +37,7 @@ type Frame struct {
 	ModifiedAt  time.Time
 	UserID      uuid.UUID
 	FrameStatus int32
+	FileID      uuid.NullUUID
 }
 
 type SchemaMigration struct {

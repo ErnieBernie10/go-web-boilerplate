@@ -11,23 +11,23 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-var db *sql.DB
+var Db *sql.DB
 
 var Service *Queries
 
 func Shutdown() {
-	db.Close()
+	Db.Close()
 }
 
 func NewDb(connectionString string) error {
 	var err error
-	db, err = sql.Open("pgx", connectionString)
+	Db, err = sql.Open("pgx", connectionString)
 	if err != nil {
 		return err
 	}
 
-	Service = New(db)
-	Service.db = db
+	Service = New(Db)
+	Service.db = Db
 
 	return nil
 }
@@ -41,7 +41,7 @@ func Health() map[string]string {
 	stats := make(map[string]string)
 
 	// Ping the database
-	err := db.PingContext(ctx)
+	err := Db.PingContext(ctx)
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
@@ -54,7 +54,7 @@ func Health() map[string]string {
 	stats["message"] = "It's healthy"
 
 	// Get database stats (like open connections, in use, idle, etc.)
-	dbStats := db.Stats()
+	dbStats := Db.Stats()
 	stats["open_connections"] = strconv.Itoa(dbStats.OpenConnections)
 	stats["in_use"] = strconv.Itoa(dbStats.InUse)
 	stats["idle"] = strconv.Itoa(dbStats.Idle)

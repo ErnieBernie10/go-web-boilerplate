@@ -58,6 +58,9 @@ func login(id uuid.UUID, email, password, hash string) (string, string, error) {
 	}
 
 	expirationTime := time.Now().Add(5 * time.Minute) // Set token expiration time.
+	if os.Getenv("APP_ENV") == string(core.Development) {
+		expirationTime = time.Now().Add(1 * time.Hour)
+	}
 	claims := &pkg.Claims{
 		Email: email,
 		ID:    id,

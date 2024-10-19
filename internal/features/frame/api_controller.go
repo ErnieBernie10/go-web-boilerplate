@@ -7,6 +7,7 @@ import (
 	"framer/internal/pkg"
 	"framer/internal/util"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -21,18 +22,21 @@ func FrameResourceHandler(r chi.Router) {
 }
 
 type GetFrameDto struct {
-	ID          uuid.UUID `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"createdAt"`
-	ModifiedAt  time.Time `json:"modifiedAt"`
-	UserID      uuid.UUID `json:"userId"`
-	FrameStatus int       `json:"frameStatus"`
+	ID          uuid.UUID     `json:"id"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	CreatedAt   time.Time     `json:"createdAt"`
+	ModifiedAt  time.Time     `json:"modifiedAt"`
+	UserID      uuid.UUID     `json:"userId"`
+	FrameStatus int           `json:"frameStatus"`
+	FileID      uuid.NullUUID `json:"fileId"`
 }
 
 type saveFrameDto struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	FileID      uuid.NullUUID `json:"fileId"`
+	FileName    string        `json:"fileName"`
 }
 
 // @Summary Get Frame
@@ -69,6 +73,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 		ModifiedAt:  e.ModifiedAt,
 		UserID:      e.UserID,
 		FrameStatus: int(e.FrameStatus),
+		FileID:      e.FileID,
 	}
 
 	response, err := json.Marshal(dto)
@@ -103,6 +108,7 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 			ModifiedAt:  e.ModifiedAt,
 			UserID:      e.UserID,
 			FrameStatus: int(e.FrameStatus),
+			FileID:      e.FileID,
 		}
 	})
 
@@ -147,7 +153,15 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity, err := fromDto(body, user.ID)
+	if body.FileID.Valid {
+		_, err := database.Service.GetFileByID(r.Context(), body.FileID.UUID)
+		if err != nil {
+			api.HandleDbError(r, w, err)
+			return
+		}
+	}
+
+	entity, err := fromDto(body, user.ID, uuid.NullUUID{UUID: id, Valid: true})
 	if err != nil {
 		api.HandleError(r, w, err, http.StatusBadRequest)
 		return
@@ -159,14 +173,15 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 		Description: string(entity.Description),
 		FrameStatus: int32(entity.FrameStatus),
 		UserID:      user.ID,
+		FileID:      entity.FileID,
 	})
 
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
+		api.HandleDbError(r, w, err)
 		return
 	}
 
-	pkg.WriteUpdatedResponse(w, id, api.GetFrameApiPath)
+	pkg.WriteUpdatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", id.String(), 1), pkg.CreatedResponse(id.String()))
 }
 
 // @Summary Post Frame
@@ -184,7 +199,15 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity, err := fromDto(body, user.ID)
+	if body.FileID.Valid {
+		_, err := database.Service.GetFileByID(r.Context(), body.FileID.UUID)
+		if err != nil {
+			api.HandleDbError(r, w, err)
+			return
+		}
+	}
+
+	entity, err := fromDto(body, user.ID, uuid.NullUUID{})
 	if err != nil {
 		api.HandleError(r, w, err, http.StatusBadRequest)
 		return
@@ -194,14 +217,15 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 		ID:          entity.ID,
 		Title:       string(entity.Title),
 		Description: string(entity.Description),
-		UserID:      entity.UserID,
 		FrameStatus: int32(entity.FrameStatus),
+		UserID:      user.ID,
+		FileID:      entity.FileID,
 	})
 
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
+		api.HandleDbError(r, w, err)
 		return
 	}
 
-	pkg.WriteCreatedResponse(w, id, api.GetFramesApiPath)
+	pkg.WriteCreatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", id.String(), 1), pkg.CreatedResponse(id.String()))
 }

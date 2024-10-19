@@ -1,7 +1,7 @@
 package home
 
 import (
-	"framer/internal/pkg"
+	"framer/internal/api"
 	"framer/internal/view"
 	"framer/internal/view/layout"
 	"net/http"
@@ -14,7 +14,7 @@ func HomeResourceHandler(r chi.Router) {
 }
 
 func handleGetIndex(w http.ResponseWriter, r *http.Request) {
-	user := pkg.GetUser(r)
+	user := api.GetUser(r)
 
 	if user != nil {
 		layout.Authenticated(&layout.AuthenticatedViewModel{

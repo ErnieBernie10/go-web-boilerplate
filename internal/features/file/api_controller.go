@@ -14,7 +14,6 @@ import (
 
 	"framer/internal/api"
 	"framer/internal/database"
-	"framer/internal/pkg"
 )
 
 func FileResourceHandler(r chi.Router) {
@@ -32,7 +31,7 @@ var baseUploadDir = os.Getenv("UPLOAD_DIR")
 // @Success 200 {object} api.CreatedResponse
 // @Router /api/file [Put]
 func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
-	user := pkg.GetUser(r)
+	user := api.GetUser(r)
 	filename := chi.URLParam(r, "filename")
 
 	if filename == "" {
@@ -76,12 +75,12 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pkg.WriteCreatedResponse(w, strings.Replace(api.DownloadFileApiPath, "{id}", id, 1), pkg.CreatedResponse(id))
+	api.WriteCreatedResponse(w, strings.Replace(api.DownloadFileApiPath, "{id}", id, 1), api.CreatedResponse(id))
 }
 
 // Handles file downloads
 func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
-	user := pkg.GetUser(r)
+	user := api.GetUser(r)
 	id := chi.URLParam(r, "id")
 	userDir := filepath.Join(baseUploadDir, user.ID.String())
 	files, err := os.ReadDir(userDir)

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"framer/internal/api"
 	"framer/internal/database"
-	"framer/internal/pkg"
 	"framer/internal/util"
 	"net/http"
 	"strings"
@@ -48,7 +47,7 @@ type saveFrameDto struct {
 // @Router /api/frame/{id} [get]
 func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	user := pkg.GetUser(r)
+	user := api.GetUser(r)
 
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -92,7 +91,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 200
 // @Router /api/frame [get]
 func getFramesHandler(w http.ResponseWriter, r *http.Request) {
-	user := pkg.GetUser(r)
+	user := api.GetUser(r)
 	fs, err := database.Service.GetFrames(r.Context(), user.ID)
 	if err != nil {
 		api.HandleError(r, w, err, http.StatusBadRequest)
@@ -129,7 +128,7 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 // @Param frame body postFrameDto true "Frame data"
 // @Router /api/frame [put]
 func putFrameHandler(w http.ResponseWriter, r *http.Request) {
-	user := pkg.GetUser(r)
+	user := api.GetUser(r)
 	body := &saveFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		api.HandleError(r, w, err, http.StatusInternalServerError)
@@ -181,7 +180,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pkg.WriteUpdatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", id.String(), 1), pkg.CreatedResponse(id.String()))
+	api.WriteUpdatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", id.String(), 1), api.CreatedResponse(id.String()))
 }
 
 // @Summary Post Frame
@@ -192,7 +191,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 // @Param frame body postFrameDto true "Frame data"
 // @Router /api/frame [post]
 func postFrameHandler(w http.ResponseWriter, r *http.Request) {
-	user := pkg.GetUser(r)
+	user := api.GetUser(r)
 	body := &saveFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		api.HandleError(r, w, err, http.StatusInternalServerError)
@@ -227,5 +226,5 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pkg.WriteCreatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", id.String(), 1), pkg.CreatedResponse(id.String()))
+	api.WriteCreatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", id.String(), 1), api.CreatedResponse(id.String()))
 }

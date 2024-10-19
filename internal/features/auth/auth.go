@@ -10,7 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"framer/internal/core"
-	"framer/internal/pkg"
 )
 
 var (
@@ -22,13 +21,13 @@ func refreshTokens(accessToken, refreshToken string) (string, string, error) {
 	if os.Getenv("APP_ENV") == string(core.Development) {
 		expirationTime = time.Now().Add(1 * time.Hour)
 	}
-	claims := &pkg.Claims{
+	claims := &core.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}
 
-	refreshClaim := &pkg.Claims{
+	refreshClaim := &core.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
@@ -38,12 +37,12 @@ func refreshTokens(accessToken, refreshToken string) (string, string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaim)
 
-	tokenString, err := token.SignedString(pkg.JwtSecret)
+	tokenString, err := token.SignedString(core.JwtSecret)
 	if err != nil {
 		return "", "", ErrInvalidLogin
 	}
 
-	refreshTokenString, err := refresh.SignedString(pkg.JwtSecret)
+	refreshTokenString, err := refresh.SignedString(core.JwtSecret)
 	if err != nil {
 		return "", "", ErrInvalidLogin
 	}
@@ -61,7 +60,7 @@ func login(id uuid.UUID, email, password, hash string) (string, string, error) {
 	if os.Getenv("APP_ENV") == string(core.Development) {
 		expirationTime = time.Now().Add(1 * time.Hour)
 	}
-	claims := &pkg.Claims{
+	claims := &core.Claims{
 		Email: email,
 		ID:    id,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -69,7 +68,7 @@ func login(id uuid.UUID, email, password, hash string) (string, string, error) {
 		},
 	}
 
-	refreshClaim := &pkg.Claims{
+	refreshClaim := &core.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
@@ -79,12 +78,12 @@ func login(id uuid.UUID, email, password, hash string) (string, string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaim)
 
-	tokenString, err := token.SignedString(pkg.JwtSecret)
+	tokenString, err := token.SignedString(core.JwtSecret)
 	if err != nil {
 		return "", "", ErrInvalidLogin
 	}
 
-	refreshTokenString, err := refresh.SignedString(pkg.JwtSecret)
+	refreshTokenString, err := refresh.SignedString(core.JwtSecret)
 	if err != nil {
 		return "", "", ErrInvalidLogin
 	}

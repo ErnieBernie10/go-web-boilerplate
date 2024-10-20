@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,8 +16,12 @@ func WriteJSONError(w http.ResponseWriter, statusCode int, err error) {
 	errorResponse := ErrorResponseDto{
 		Errors: []string{},
 	}
-	for i := 0; i < len(errorMessages); i += 2 {
-		errorResponse.Errors = append(errorResponse.Errors, fmt.Sprintf("%s: %s", errorMessages[i], errorMessages[i+1]))
+	if len(errorMessages)%2 == 1 {
+		errorResponse.Errors = append(errorResponse.Errors, errorMessages[0])
+	} else {
+		for i := 0; i < len(errorMessages); i += 2 {
+			errorResponse.Errors = append(errorResponse.Errors, fmt.Sprintf("%s: %s", errorMessages[i], errorMessages[i+1]))
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -26,6 +31,8 @@ func WriteJSONError(w http.ResponseWriter, statusCode int, err error) {
 
 func HandleError(r *http.Request, w http.ResponseWriter, err error) {
 	if errors.Is(err, core.ErrNotFound) {
+		WriteJSONError(w, http.StatusNotFound, err)
+	} else if errors.Is(err, sql.ErrNoRows) {
 		WriteJSONError(w, http.StatusNotFound, err)
 	} else if errors.Is(err, core.ErrValidation) {
 		WriteJSONError(w, http.StatusBadRequest, err)

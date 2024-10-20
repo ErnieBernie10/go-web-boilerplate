@@ -112,7 +112,7 @@ ALTER TABLE ONLY public.schema_migrations
 --
 
 ALTER TABLE ONLY public.frame
-    ADD CONSTRAINT frame_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.file(id);
+    ADD CONSTRAINT frame_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.file(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -133,4 +133,5 @@ ALTER TABLE ONLY public.frame
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
-    ('20240923075031');
+    ('20240923075031'),
+    ('20241020094501');

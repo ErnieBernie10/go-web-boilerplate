@@ -3,7 +3,6 @@ package file
 import (
 	"database/sql"
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -40,43 +39,23 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := uuid.New().String()
-	filename = id + "_" + filename
-
-	uploadDir := filepath.Join(baseUploadDir, user.ID.String())
-
-	// Ensure upload directory exists
-	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-		os.MkdirAll(uploadDir, 0755)
-	}
-
-	// Create a file locally to save the uploaded file
-	dst, err := os.Create(filepath.Join(uploadDir, filename))
-	if err != nil {
-		api.HandleError(r, w, err)
-		return
-	}
-	defer dst.Close()
-
-	// Copy the request body (file data) to the destination file
-	_, err = io.Copy(dst, r.Body)
-	if err != nil {
-		api.HandleError(r, w, err)
-		os.Remove(filepath.Join(uploadDir, filename))
-		return
-	}
-
-	err = database.Service.CreateFile(r.Context(), database.CreateFileParams{
-		ID:       uuid.MustParse(id),
-		FileName: sql.NullString{String: filename, Valid: true},
+	var id uuid.UUID
+	err := database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
+		var err error
+		id, err = UploadFile(r.Context(), database.Service.WithTx(tx), UploadFileCommand{
+			FileName: filename,
+			UserID:   user.ID,
+			Body:     r.Body,
+		})
+		return err
 	})
+
 	if err != nil {
 		api.HandleError(r, w, err)
-		os.Remove(filepath.Join(uploadDir, filename))
 		return
 	}
 
-	api.WriteCreatedResponse(w, strings.Replace(api.DownloadFileApiPath, "{id}", id, 1), api.CreatedResponse(id))
+	api.WriteCreatedResponse(w, strings.Replace(api.DownloadFileApiPath, "{id}", id.String(), 1), api.CreatedResponse(id.String()))
 }
 
 // Handles file downloads

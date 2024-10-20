@@ -1,8 +1,11 @@
 package frame
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"framer/internal/api"
+	"framer/internal/core"
 	"framer/internal/database"
 	"framer/internal/util"
 	"net/http"
@@ -120,7 +123,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
 	body := &saveFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
 		return
 	}
 
@@ -128,7 +131,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(idParam)
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
 		return
 	}
 
@@ -137,31 +140,23 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 	})
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(core.ErrNotFound, err))
 		return
-	}
-
-	if body.FileID.Valid {
-		_, err := database.Service.GetFileByID(r.Context(), body.FileID.UUID)
-		if err != nil {
-			api.HandleError(r, w, err)
-			return
-		}
 	}
 
 	entity, err := fromDto(body, user.ID, uuid.NullUUID{UUID: id, Valid: true})
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
 		return
 	}
 
-	id, err = database.Service.SaveFrame(r.Context(), database.SaveFrameParams{
-		ID:          entity.ID,
-		Title:       string(entity.Title),
-		Description: string(entity.Description),
-		FrameStatus: int32(entity.FrameStatus),
-		UserID:      user.ID,
-		FileID:      entity.FileID,
+	err = database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
+		id, err := SaveFrame(r.Context(), database.Service.WithTx(tx), entity)
+		if err != nil {
+			return err
+		}
+		entity.ID = id
+		return nil
 	})
 
 	if err != nil {
@@ -183,39 +178,30 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
 	body := &saveFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
 		return
-	}
-
-	if body.FileID.Valid {
-		_, err := database.Service.GetFileByID(r.Context(), body.FileID.UUID)
-		if err != nil {
-			api.HandleError(r, w, err)
-			return
-		}
 	}
 
 	entity, err := fromDto(body, user.ID, uuid.NullUUID{})
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
 		return
 	}
 
-	id, err := database.Service.SaveFrame(r.Context(), database.SaveFrameParams{
-		ID:          entity.ID,
-		Title:       string(entity.Title),
-		Description: string(entity.Description),
-		FrameStatus: int32(entity.FrameStatus),
-		UserID:      user.ID,
-		FileID:      entity.FileID,
+	err = database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
+		id, err := SaveFrame(r.Context(), database.Service.WithTx(tx), entity)
+		if err != nil {
+			return err
+		}
+		entity.ID = id
+		return nil
 	})
-
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(core.ErrNotFound, err))
 		return
 	}
 
-	api.WriteCreatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", id.String(), 1), api.CreatedResponse(id.String()))
+	api.WriteCreatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", entity.ID.String(), 1), api.CreatedResponse(entity.ID.String()))
 }
 
 func deleteFrameHandler(w http.ResponseWriter, r *http.Request) {
@@ -223,7 +209,7 @@ func deleteFrameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
 		return
 	}
 
@@ -232,16 +218,19 @@ func deleteFrameHandler(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 	})
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(core.ErrNotFound, err))
 		return
 	}
 
-	err = database.Service.DeleteFrame(r.Context(), database.DeleteFrameParams{
-		ID:     id,
-		UserID: user.ID,
+	err = database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
+		return DeleteFrame(r.Context(), database.Service.WithTx(tx), DeleteFrameCommand{
+			ID:     id,
+			UserID: user.ID,
+		})
 	})
+
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(errors.New("failed to delete frame"), err))
 		return
 	}
 

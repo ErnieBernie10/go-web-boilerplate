@@ -24,6 +24,9 @@ docker-run:
 docker-down:
 	@docker compose down
 
+migrate:
+	@dbmate migrate
+
 migrate-create:
 	@dbmate create
 

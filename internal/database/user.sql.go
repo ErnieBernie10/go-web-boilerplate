@@ -8,6 +8,8 @@ package database
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -32,9 +34,10 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AppUser, er
 	return i, err
 }
 
-const register = `-- name: Register :exec
+const register = `-- name: Register :one
 insert into app_user (email, password_hash)
 values ($1, $2)
+returning id
 `
 
 type RegisterParams struct {
@@ -42,7 +45,9 @@ type RegisterParams struct {
 	PasswordHash sql.NullString
 }
 
-func (q *Queries) Register(ctx context.Context, arg RegisterParams) error {
-	_, err := q.db.ExecContext(ctx, register, arg.Email, arg.PasswordHash)
-	return err
+func (q *Queries) Register(ctx context.Context, arg RegisterParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, register, arg.Email, arg.PasswordHash)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }

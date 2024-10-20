@@ -11,6 +11,20 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteFrame = `-- name: DeleteFrame :exec
+delete from frame where id = $1 and user_id = $2
+`
+
+type DeleteFrameParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteFrame(ctx context.Context, arg DeleteFrameParams) error {
+	_, err := q.db.ExecContext(ctx, deleteFrame, arg.ID, arg.UserID)
+	return err
+}
+
 const getFrame = `-- name: GetFrame :one
 select id, title, description, created_at, modified_at, user_id, frame_status, file_id
 from frame

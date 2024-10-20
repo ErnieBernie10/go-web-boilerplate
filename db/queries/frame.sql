@@ -24,3 +24,5 @@ set title = $2,
   file_id = $6,
   modified_at = NOW()
 RETURNING id;
+-- name: DeleteFrame :exec
+delete from frame where id = $1 and user_id = $2;

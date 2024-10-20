@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"framer/internal/api"
+	"framer/internal/core"
 	"framer/internal/database"
 )
 
@@ -35,7 +36,7 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 	filename := chi.URLParam(r, "filename")
 
 	if filename == "" {
-		api.HandleError(r, w, errors.New("filename is required"), http.StatusBadRequest)
+		api.HandleError(r, w, errors.Join(core.ErrValidation, errors.New("filename is required")))
 		return
 	}
 
@@ -52,7 +53,7 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 	// Create a file locally to save the uploaded file
 	dst, err := os.Create(filepath.Join(uploadDir, filename))
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
+		api.HandleError(r, w, err)
 		return
 	}
 	defer dst.Close()
@@ -60,7 +61,7 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 	// Copy the request body (file data) to the destination file
 	_, err = io.Copy(dst, r.Body)
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
+		api.HandleError(r, w, err)
 		os.Remove(filepath.Join(uploadDir, filename))
 		return
 	}
@@ -70,7 +71,7 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 		FileName: sql.NullString{String: filename, Valid: true},
 	})
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
+		api.HandleError(r, w, err)
 		os.Remove(filepath.Join(uploadDir, filename))
 		return
 	}
@@ -85,7 +86,7 @@ func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	userDir := filepath.Join(baseUploadDir, user.ID.String())
 	files, err := os.ReadDir(userDir)
 	if err != nil {
-		api.HandleError(r, w, errors.New("file not found"), http.StatusNotFound)
+		api.HandleError(r, w, errors.Join(core.ErrNotFound, err))
 		return
 	}
 
@@ -96,5 +97,5 @@ func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	api.HandleError(r, w, errors.New("file not found"), http.StatusNotFound)
+	api.HandleError(r, w, errors.Join(core.ErrNotFound, errors.New("file not found")))
 }

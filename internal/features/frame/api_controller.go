@@ -18,6 +18,7 @@ func FrameResourceHandler(r chi.Router) {
 	r.Get(api.GetFrameApiPath, getFrameHandler)
 	r.Post(api.PostFrameApiPath, postFrameHandler)
 	r.Put(api.PutFrameApiPath, putFrameHandler)
+	r.Delete(api.DeleteFrameApiPath, deleteFrameHandler)
 }
 
 type GetFrameDto struct {
@@ -51,7 +52,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusBadRequest)
+		api.HandleError(r, w, err)
 	}
 
 	e, err := database.Service.GetFrame(ctx, database.GetFrameParams{
@@ -60,7 +61,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		api.HandleDbError(r, w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 
@@ -75,13 +76,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 		FileID:      e.FileID,
 	}
 
-	response, err := json.Marshal(dto)
-	if err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(response)
+	api.WriteOkResponse(w, dto)
 }
 
 // @Summary Get Frames
@@ -94,7 +89,7 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
 	fs, err := database.Service.GetFrames(r.Context(), user.ID)
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusBadRequest)
+		api.HandleError(r, w, err)
 		return
 	}
 
@@ -111,13 +106,7 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	})
 
-	jsonStr, err := json.Marshal(dtos)
-	if err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(jsonStr)
+	api.WriteOkResponse(w, dtos)
 }
 
 // @Summary Put Frame
@@ -131,7 +120,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
 	body := &saveFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
+		api.HandleError(r, w, err)
 		return
 	}
 
@@ -139,7 +128,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(idParam)
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusBadRequest)
+		api.HandleError(r, w, err)
 		return
 	}
 
@@ -148,21 +137,21 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 	})
 	if err != nil {
-		api.HandleDbError(r, w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 
 	if body.FileID.Valid {
 		_, err := database.Service.GetFileByID(r.Context(), body.FileID.UUID)
 		if err != nil {
-			api.HandleDbError(r, w, err)
+			api.HandleError(r, w, err)
 			return
 		}
 	}
 
 	entity, err := fromDto(body, user.ID, uuid.NullUUID{UUID: id, Valid: true})
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusBadRequest)
+		api.HandleError(r, w, err)
 		return
 	}
 
@@ -176,7 +165,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		api.HandleDbError(r, w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 
@@ -194,21 +183,21 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
 	body := &saveFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, err, http.StatusInternalServerError)
+		api.HandleError(r, w, err)
 		return
 	}
 
 	if body.FileID.Valid {
 		_, err := database.Service.GetFileByID(r.Context(), body.FileID.UUID)
 		if err != nil {
-			api.HandleDbError(r, w, err)
+			api.HandleError(r, w, err)
 			return
 		}
 	}
 
 	entity, err := fromDto(body, user.ID, uuid.NullUUID{})
 	if err != nil {
-		api.HandleError(r, w, err, http.StatusBadRequest)
+		api.HandleError(r, w, err)
 		return
 	}
 
@@ -222,9 +211,39 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		api.HandleDbError(r, w, err)
+		api.HandleError(r, w, err)
 		return
 	}
 
 	api.WriteCreatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", id.String(), 1), api.CreatedResponse(id.String()))
+}
+
+func deleteFrameHandler(w http.ResponseWriter, r *http.Request) {
+	user := api.GetUser(r)
+
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		api.HandleError(r, w, err)
+		return
+	}
+
+	_, err = database.Service.GetFrame(r.Context(), database.GetFrameParams{
+		ID:     id,
+		UserID: user.ID,
+	})
+	if err != nil {
+		api.HandleError(r, w, err)
+		return
+	}
+
+	err = database.Service.DeleteFrame(r.Context(), database.DeleteFrameParams{
+		ID:     id,
+		UserID: user.ID,
+	})
+	if err != nil {
+		api.HandleError(r, w, err)
+		return
+	}
+
+	api.WriteOkResponse(w, nil)
 }

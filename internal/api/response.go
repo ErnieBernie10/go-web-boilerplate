@@ -1,67 +1,58 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"framer/internal/core"
 	"net/http"
-	"os"
+	"strings"
 )
 
 func WriteJSONError(w http.ResponseWriter, statusCode int, err error) {
-	var errorResponse interface{}
-	if errs, ok := err.(interface{ Unwrap() []error }); ok {
-		var messages []string
-		for _, e := range errs.Unwrap() {
-			messages = append(messages, e.Error())
-		}
-		errorResponse = map[string][]string{"errors": messages}
-	} else {
-		errorResponse = map[string]string{"error": err.Error()}
+	errorMessages := strings.Split(err.Error(), "\n")
+
+	errorResponse := ErrorResponseDto{
+		Errors: []string{},
 	}
-	errorJSON, _ := json.Marshal(errorResponse)
+	for i := 0; i < len(errorMessages); i += 2 {
+		errorResponse.Errors = append(errorResponse.Errors, fmt.Sprintf("%s: %s", errorMessages[i], errorMessages[i+1]))
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	w.Write(errorJSON)
+	json.NewEncoder(w).Encode(errorResponse)
 }
 
-func HandleError(r *http.Request, w http.ResponseWriter, err error, statusCode int) {
-
-	switch statusCode {
-	case http.StatusInternalServerError:
-		GetLogger(r).Error(err.Error())
-		if os.Getenv("APP_ENV") == string(core.Development) {
-			WriteJSONError(w, statusCode, err)
-		} else {
-			WriteJSONError(w, statusCode, errors.New("internal server error"))
-		}
-	default:
-		WriteJSONError(w, statusCode, err)
-	}
-}
-
-func HandleDbError(r *http.Request, w http.ResponseWriter, err error) {
-	if errors.Is(err, sql.ErrNoRows) {
-		HandleError(r, w, err, http.StatusNotFound)
+func HandleError(r *http.Request, w http.ResponseWriter, err error) {
+	if errors.Is(err, core.ErrNotFound) {
+		WriteJSONError(w, http.StatusNotFound, err)
+	} else if errors.Is(err, core.ErrValidation) {
+		WriteJSONError(w, http.StatusBadRequest, err)
 	} else {
-		HandleError(r, w, err, http.StatusInternalServerError)
+		WriteJSONError(w, http.StatusInternalServerError, err)
 	}
 }
 
 func WriteCreatedResponse(w http.ResponseWriter, resourcePath string, response CreatedResponseDto) {
-	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	location := resourcePath
 	w.Header().Set("Location", location)
 	json.NewEncoder(w).Encode(response)
 }
 
 func WriteUpdatedResponse(w http.ResponseWriter, resourcePath string, response CreatedResponseDto) {
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	location := resourcePath
 	w.Header().Set("Location", location)
+	json.NewEncoder(w).Encode(response)
+}
+
+func WriteOkResponse(w http.ResponseWriter, response interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -71,4 +62,8 @@ func CreatedResponse(id string) CreatedResponseDto {
 
 type CreatedResponseDto struct {
 	Id string `json:"id"`
+}
+
+type ErrorResponseDto struct {
+	Errors []string `json:"errors"`
 }

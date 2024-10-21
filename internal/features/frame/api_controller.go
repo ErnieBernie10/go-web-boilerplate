@@ -16,7 +16,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func FrameResourceHandler(r chi.Router) {
+func FrameApiHandler(r chi.Router) {
 	r.Get(api.GetFramesApiPath, getFramesHandler)
 	r.Get(api.GetFrameApiPath, getFrameHandler)
 	r.Post(api.PostFrameApiPath, postFrameHandler)
@@ -24,7 +24,7 @@ func FrameResourceHandler(r chi.Router) {
 	r.Delete(api.DeleteFrameApiPath, deleteFrameHandler)
 }
 
-type GetFrameDto struct {
+type GetFrameResponseDto struct {
 	ID          uuid.UUID     `json:"id"`
 	Title       string        `json:"title"`
 	Description string        `json:"description"`
@@ -68,7 +68,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto := &GetFrameDto{
+	dto := &GetFrameResponseDto{
 		ID:          e.ID,
 		Title:       e.Title,
 		Description: e.Description,
@@ -96,8 +96,8 @@ func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dtos := util.Map(fs, func(e database.Frame) *GetFrameDto {
-		return &GetFrameDto{
+	dtos := util.Map(fs, func(e database.Frame) *GetFrameResponseDto {
+		return &GetFrameResponseDto{
 			ID:          e.ID,
 			Title:       e.Title,
 			Description: e.Description,

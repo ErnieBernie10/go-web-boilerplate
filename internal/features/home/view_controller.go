@@ -17,9 +17,8 @@ func handleGetIndex(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
 
 	if user != nil {
-		layout.Authenticated(&layout.AuthenticatedViewModel{
-			Email: user.Email,
-		}, indexPage(user)).Render(r.Context(), w)
+		w.Header().Set("HX-Redirect", view.FramePath)
+		http.Redirect(w, r, view.FramePath, http.StatusSeeOther)
 		return
 	}
 	layout.Unauthenticated(view.RegisterPath, view.LoginPath, indexPage(user)).Render(r.Context(), w)

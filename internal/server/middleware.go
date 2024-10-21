@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"framer/internal/core"
+	"framer/internal/view"
 	"net/http"
 	"strings"
 
@@ -47,6 +48,10 @@ func AuthGuardMiddleware(next http.Handler) http.Handler {
 		tokenStr := getTokenString(r)
 
 		if tokenStr == "" {
+			if r.Header.Get("Content-Type") != "application/json" {
+				http.Redirect(w, r, view.LoginPath, http.StatusSeeOther)
+				return
+			}
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -57,6 +62,10 @@ func AuthGuardMiddleware(next http.Handler) http.Handler {
 			return core.JwtSecret, nil
 		})
 		if err != nil || !token.Valid {
+			if r.Header.Get("Content-Type") != "application/json" {
+				http.Redirect(w, r, view.LoginPath, http.StatusSeeOther)
+				return
+			}
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -89,13 +98,4 @@ func getTokenString(r *http.Request) string {
 		return ""
 	}
 	return tokenCookie.Value
-}
-
-func GetTokens(r *http.Request) func() (string, string) {
-	return func() (string, string) {
-		accessToken, _ := r.Context().Value(core.TokenContextKey).(string)
-		refreshToken, _ := r.Context().Value(core.RefreshContextKey).(string)
-
-		return accessToken, refreshToken
-	}
 }

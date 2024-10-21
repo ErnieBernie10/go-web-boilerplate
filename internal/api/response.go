@@ -36,6 +36,8 @@ func HandleError(r *http.Request, w http.ResponseWriter, err error) {
 		WriteJSONError(w, http.StatusNotFound, err)
 	} else if errors.Is(err, core.ErrValidation) {
 		WriteJSONError(w, http.StatusBadRequest, err)
+	} else if errors.Is(err, core.ErrUnauthorized) {
+		WriteJSONError(w, http.StatusUnauthorized, err)
 	} else {
 		WriteJSONError(w, http.StatusInternalServerError, err)
 	}

@@ -4,7 +4,6 @@ import (
 	"framer/internal/api"
 	"framer/internal/core"
 	"framer/internal/view"
-	"framer/internal/view/layout"
 	"net/http"
 	"time"
 
@@ -30,7 +29,7 @@ func handleGetLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	layout.Unauthenticated(view.RegisterPath, view.LoginPath, loginPage()).Render(r.Context(), w)
+	view.Render(w, r, loginPage(), nil)
 }
 
 func handleGetRegister(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +39,7 @@ func handleGetRegister(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, view.IndexPath, http.StatusSeeOther)
 	}
 
-	layout.Unauthenticated(view.RegisterPath, view.LoginPath, registerPage()).Render(r.Context(), w)
+	view.Render(w, r, registerPage(), nil)
 }
 
 func handlePostRegister(w http.ResponseWriter, r *http.Request) {
@@ -71,11 +70,10 @@ func handlePostRegister(w http.ResponseWriter, r *http.Request) {
 		default:
 			break
 		}
-
-		return
 	}
 
-	http.Redirect(w, r, view.IndexPath, http.StatusSeeOther)
+	w.Header().Set("HX-Redirect", view.IndexPath)
+	w.WriteHeader(http.StatusSeeOther)
 }
 
 func handlePostLogin(w http.ResponseWriter, r *http.Request) {

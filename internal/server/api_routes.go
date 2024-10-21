@@ -10,9 +10,9 @@ import (
 
 func apiRouteHandler(r chi.Router) {
 	var privateRoutes = r.With(AuthGuardMiddleware)
-	privateRoutes.Group(frame.FrameResourceHandler)
+	privateRoutes.Group(frame.FrameApiHandler)
 
-	privateRoutes.Group(file.FileResourceHandler)
+	privateRoutes.Group(file.FileApiHandler)
 
 	r.Group(auth.AuthApiResourceHandler)
 }

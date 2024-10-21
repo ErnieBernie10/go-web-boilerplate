@@ -16,7 +16,7 @@ import (
 	"framer/internal/database"
 )
 
-func FileResourceHandler(r chi.Router) {
+func FileApiHandler(r chi.Router) {
 	r.Put(api.UploadFileApiPath, uploadRawFileHandler)
 	r.Get(api.DownloadFileApiPath, downloadFileHandler)
 }

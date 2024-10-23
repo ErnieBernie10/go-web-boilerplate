@@ -16,7 +16,11 @@ require (
 	github.com/testcontainers/testcontainers-go v0.33.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.33.0
 	golang.org/x/crypto v0.27.0
+	google.golang.org/grpc v1.66.2
+	google.golang.org/protobuf v1.34.2
 )
+
+require google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 
 require (
 	dario.cat/mergo v1.0.0 // indirect

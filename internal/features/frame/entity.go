@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"framer/internal/core"
+	pb "framer/internal/proto"
 	"time"
 	"unicode/utf8"
 
@@ -61,6 +62,41 @@ func CreateUserID(userId string) (uuid.UUID, error) {
 	}
 
 	return id, nil
+}
+
+func fromRpc(req *pb.CreateFrameRequest, userId uuid.UUID, id uuid.NullUUID) (*Model, error) {
+	var errs []error
+
+	title, err := CreateTitle(req.Frame.Title)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	description, err := CreateDescription(req.Frame.Description)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+
+	m := &Model{
+		Title:       title,
+		Description: description,
+		CreatedAt:   time.Now(),
+		ModifiedAt:  time.Now(),
+		UserID:      userId,
+		FrameStatus: Active,
+	}
+
+	if id.Valid {
+		m.ID = id.UUID
+	} else {
+		m.ID = uuid.New()
+	}
+
+	return m, nil
 }
 
 func fromDto(dto *saveFrameDto, userId uuid.UUID, id uuid.NullUUID) (*Model, error) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"framer/internal/database"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -19,7 +18,7 @@ type DeleteFileCommand struct {
 type UploadFileCommand struct {
 	FileName string
 	UserID   uuid.UUID
-	Body     io.ReadCloser
+	Body     []byte
 }
 
 func DeleteFile(ctx context.Context, q *database.Queries, cmd DeleteFileCommand) error {
@@ -53,14 +52,7 @@ func UploadFile(ctx context.Context, q *database.Queries, cmd UploadFileCommand)
 	}
 
 	// Create a file locally to save the uploaded file
-	dst, err := os.Create(filepath.Join(uploadDir, filename))
-	if err != nil {
-		return uuid.Nil, err
-	}
-	defer dst.Close()
-
-	// Copy the request body (file data) to the destination file
-	_, err = io.Copy(dst, cmd.Body)
+	err := os.WriteFile(filepath.Join(uploadDir, filename), cmd.Body, 0644)
 	if err != nil {
 		return uuid.Nil, err
 	}

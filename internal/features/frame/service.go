@@ -46,6 +46,30 @@ func DeleteFrame(ctx context.Context, q *database.Queries, cmd DeleteFrameComman
 	return nil
 }
 
+func SaveFrameWithFile(ctx context.Context, q *database.Queries, cmd *Model, f []byte, fileName string) (uuid.UUID, error) {
+	fileID, err := file.UploadFile(ctx, q, file.UploadFileCommand{
+		FileName: fileName,
+		UserID:   cmd.UserID,
+		Body:     f,
+	})
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	cmd.FileID = uuid.NullUUID{
+		UUID:  fileID,
+		Valid: true,
+	}
+
+	id, err := SaveFrame(ctx, q, cmd)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
+}
+
 func SaveFrame(ctx context.Context, q *database.Queries, cmd *Model) (uuid.UUID, error) {
 	if cmd.FileID.Valid {
 		_, err := q.GetFileByID(ctx, cmd.FileID.UUID)

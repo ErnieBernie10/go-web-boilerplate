@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package public;
+
+option go_package = "internal/proto";
+
+enum FrameStatus {
+    Deleted = 0;
+    Active = 1;
+}
+
+enum FrameType {
+    Image = 0;
+    Video = 1;
+    Link = 2;
+    Text = 3;
+}
+
+// Represents a user in the app
+message AppUser {
+    string id = 1;                     // UUID
+    string email = 2;                  // Email
+    string password_hash = 3;          // Password Hash
+    string name = 4;                   // Name
+}
+
+// Represents a file in the app
+message File {
+    string id = 1;                     // UUID
+    string file_name = 2;              // File Name
+    bytes content = 3;                 // File Data
+}
+
+// Represents a frame in the app
+message Frame {
+    string id = 1;                     // UUID
+    string title = 2;                  // Title
+    string description = 3;            // Description
+    string user_id = 4;                // UUID of the user
+    string content = 5;                // Content
+    FrameStatus frame_status = 6;      // Frame Status
+    FrameType frame_type = 7;          // Frame Type
+    File file = 8;                     // File
+}
+
+// Requests and responses for CRUD operations
+message GetByIdRequest {
+    string id = 1;
+}
+
+message DeleteByIdRequest {
+    string id = 1;
+}
+
+message EmptyResponse {}
+
+// AppUser CRUD requests
+message CreateAppUserRequest {
+    AppUser app_user = 1;
+}
+
+message UpdateAppUserRequest {
+    AppUser app_user = 1;
+}
+
+message ListAppUsersResponse {
+    repeated AppUser app_users = 1;
+}
+
+// File CRUD requests
+message CreateFileRequest {
+    File file = 1;
+}
+
+message UpdateFileRequest {
+    File file = 1;
+}
+
+message ListFilesResponse {
+    repeated File files = 1;
+}
+
+// Frame CRUD requests
+message CreateFrameRequest {
+    Frame frame = 1;
+}
+
+message UpdateFrameRequest {
+    Frame frame = 1;
+}
+
+message ListFramesResponse {
+    repeated Frame frames = 1;
+}
+
+// gRPC Services
+service AppUserService {
+    rpc CreateAppUser(CreateAppUserRequest) returns (AppUser);
+}
+
+service FrameService {
+    rpc CreateFrame(CreateFrameRequest) returns (Frame);
+    rpc GetFrame(GetByIdRequest) returns (Frame);
+    rpc UpdateFrame(UpdateFrameRequest) returns (Frame);
+    rpc DeleteFrame(DeleteByIdRequest) returns (EmptyResponse);
+    rpc ListFrames(EmptyResponse) returns (ListFramesResponse);
+}

@@ -45,6 +45,8 @@ generate:
 swag:
 	@swag init -g internal/server/routes.go
 
+protoc:
+	@protoc --go_out=. --go-grpc_out=. proto/framer.proto
 
 # Test the application
 test:

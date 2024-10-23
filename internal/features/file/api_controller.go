@@ -3,6 +3,7 @@ package file
 import (
 	"database/sql"
 	"errors"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -39,13 +40,19 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
+		return
+	}
+
 	var id uuid.UUID
-	err := database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
+	err = database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
 		var err error
 		id, err = UploadFile(r.Context(), database.Service.WithTx(tx), UploadFileCommand{
 			FileName: filename,
 			UserID:   user.ID,
-			Body:     r.Body,
+			Body:     body,
 		})
 		return err
 	})

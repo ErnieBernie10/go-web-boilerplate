@@ -53,7 +53,9 @@ CREATE TABLE public.frame (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     modified_at timestamp with time zone DEFAULT now() NOT NULL,
     user_id uuid NOT NULL,
-    frame_status integer NOT NULL,
+    frame_status smallint NOT NULL,
+    content_type smallint NOT NULL,
+    content text NOT NULL,
     file_id uuid
 );
 
@@ -89,14 +91,6 @@ ALTER TABLE ONLY public.app_user
 
 ALTER TABLE ONLY public.file
     ADD CONSTRAINT file_pkey PRIMARY KEY (id);
-
-
---
--- Name: frame frame_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.frame
-    ADD CONSTRAINT frame_pkey PRIMARY KEY (id);
 
 
 --

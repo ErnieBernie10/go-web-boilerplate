@@ -3,12 +3,19 @@ package auth
 import (
 	"framer/internal/api"
 	"framer/internal/core"
+	"framer/internal/rpc"
 	"framer/internal/view"
 	"net/http"
 	"time"
 
+	pb "framer/internal/proto"
+
 	"github.com/go-chi/chi/v5"
 )
+
+type authClient struct {
+	pb.AppUserServiceClient
+}
 
 var email = "email"
 var password = "password"
@@ -57,19 +64,16 @@ func handlePostRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if status, err := api.ApiClient.Request("POST",
-		api.RegisterApiPath,
-		registerCommandDto{
-			Email:    email,
-			Password: pw,
-		}, nil); err != nil {
-		switch status {
-		case http.StatusBadRequest:
-			view.Message(view.Error, "User with E-mail already exists").Render(r.Context(), w)
-			return
-		default:
-			break
-		}
+	_, err := rpc.Client.Auth.Register(r.Context(), &pb.RegisterRequest{
+		Email:    email,
+		Password: pw,
+		Name:     "Unimplemented",
+	})
+
+	if err != nil {
+		view.Message(view.Error, "Something went wrong").Render(r.Context(), w)
+		view.GetLogger(r).Error(err.Error())
+		return
 	}
 
 	w.Header().Set("HX-Redirect", view.IndexPath)
@@ -86,21 +90,15 @@ func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue(email)
 	pw := r.FormValue(password)
 
-	response := api.LoginResponseDto{}
-
-	status, err := api.ApiClient.Request("POST", api.LoginApiPath, loginCommandDto{
+	response, err := rpc.Client.Auth.Login(r.Context(), &pb.LoginRequest{
 		Email:    email,
 		Password: pw,
-	}, &response)
+	})
 
 	if err != nil {
-		switch status {
-		case http.StatusUnauthorized:
-			view.Message(view.Error, "E-mail or password do not match").Render(r.Context(), w)
-			return
-		}
-		view.Message(view.Error, "Something went wrong").Render(r.Context(), w)
+		view.Message(view.Error, "Invalid credentials").Render(r.Context(), w)
 		view.GetLogger(r).Error(err.Error())
+		return
 	}
 
 	// Step 3: Set the JWT token in an HTTP-only cookie.

@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AppUserService_CreateAppUser_FullMethodName = "/public.AppUserService/CreateAppUser"
+	AppUserService_Register_FullMethodName = "/public.AppUserService/Register"
+	AppUserService_Login_FullMethodName    = "/public.AppUserService/Login"
 )
 
 // AppUserServiceClient is the client API for AppUserService service.
@@ -28,7 +29,8 @@ const (
 //
 // gRPC Services
 type AppUserServiceClient interface {
-	CreateAppUser(ctx context.Context, in *CreateAppUserRequest, opts ...grpc.CallOption) (*AppUser, error)
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*AppUser, error)
 }
 
 type appUserServiceClient struct {
@@ -39,10 +41,20 @@ func NewAppUserServiceClient(cc grpc.ClientConnInterface) AppUserServiceClient {
 	return &appUserServiceClient{cc}
 }
 
-func (c *appUserServiceClient) CreateAppUser(ctx context.Context, in *CreateAppUserRequest, opts ...grpc.CallOption) (*AppUser, error) {
+func (c *appUserServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, AppUserService_Register_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appUserServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*AppUser, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AppUser)
-	err := c.cc.Invoke(ctx, AppUserService_CreateAppUser_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AppUserService_Login_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +67,8 @@ func (c *appUserServiceClient) CreateAppUser(ctx context.Context, in *CreateAppU
 //
 // gRPC Services
 type AppUserServiceServer interface {
-	CreateAppUser(context.Context, *CreateAppUserRequest) (*AppUser, error)
+	Register(context.Context, *RegisterRequest) (*EmptyResponse, error)
+	Login(context.Context, *LoginRequest) (*AppUser, error)
 	mustEmbedUnimplementedAppUserServiceServer()
 }
 
@@ -66,8 +79,11 @@ type AppUserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAppUserServiceServer struct{}
 
-func (UnimplementedAppUserServiceServer) CreateAppUser(context.Context, *CreateAppUserRequest) (*AppUser, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAppUser not implemented")
+func (UnimplementedAppUserServiceServer) Register(context.Context, *RegisterRequest) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedAppUserServiceServer) Login(context.Context, *LoginRequest) (*AppUser, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
 func (UnimplementedAppUserServiceServer) mustEmbedUnimplementedAppUserServiceServer() {}
 func (UnimplementedAppUserServiceServer) testEmbeddedByValue()                        {}
@@ -90,20 +106,38 @@ func RegisterAppUserServiceServer(s grpc.ServiceRegistrar, srv AppUserServiceSer
 	s.RegisterService(&AppUserService_ServiceDesc, srv)
 }
 
-func _AppUserService_CreateAppUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateAppUserRequest)
+func _AppUserService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AppUserServiceServer).CreateAppUser(ctx, in)
+		return srv.(AppUserServiceServer).Register(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AppUserService_CreateAppUser_FullMethodName,
+		FullMethod: AppUserService_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AppUserServiceServer).CreateAppUser(ctx, req.(*CreateAppUserRequest))
+		return srv.(AppUserServiceServer).Register(ctx, req.(*RegisterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppUserService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppUserServiceServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppUserService_Login_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppUserServiceServer).Login(ctx, req.(*LoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -116,8 +150,12 @@ var AppUserService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AppUserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateAppUser",
-			Handler:    _AppUserService_CreateAppUser_Handler,
+			MethodName: "Register",
+			Handler:    _AppUserService_Register_Handler,
+		},
+		{
+			MethodName: "Login",
+			Handler:    _AppUserService_Login_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

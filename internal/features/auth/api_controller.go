@@ -34,7 +34,7 @@ func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := database.Service.GetUserByEmail(r.Context(), body.Email)
+	user, err := database.Service.Queries.GetUserByEmail(r.Context(), body.Email)
 	if err != nil {
 		api.HandleError(r, w, errors.Join(core.ErrUnauthorized, err))
 		return
@@ -78,7 +78,7 @@ func handleApiPostRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := database.Service.GetUserByEmail(r.Context(), body.Email)
+	_, err := database.Service.Queries.GetUserByEmail(r.Context(), body.Email)
 	if err == nil {
 		api.HandleError(r, w, errors.Join(core.ErrValidation, errors.New("user with e-mail already exists")))
 		return
@@ -90,7 +90,7 @@ func handleApiPostRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := database.Service.Register(r.Context(), database.RegisterParams{
+	id, err := database.Service.Queries.Register(r.Context(), database.RegisterParams{
 		Email:        body.Email,
 		PasswordHash: sql.NullString{Valid: true, String: string(hashedPassword)},
 	})

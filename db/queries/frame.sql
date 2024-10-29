@@ -1,10 +1,14 @@
 -- name: GetFrame :one
 select *
 from frame
-where id = $1 and user_id = $2;
+  join file f on f.id = frame.file_id
+where frame.id = $1
+  and user_id = $2;
 -- name: GetFrames :many
 select *
-from frame where user_id = $1;
+from frame
+    join file f on f.id = frame.file_id
+where user_id = $1;
 -- name: SaveFrame :one
 insert into frame (
     id,
@@ -25,4 +29,6 @@ set title = $2,
   modified_at = NOW()
 RETURNING id;
 -- name: DeleteFrame :exec
-delete from frame where id = $1 and user_id = $2;
+delete from frame
+where id = $1
+  and user_id = $2;

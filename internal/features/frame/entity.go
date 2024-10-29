@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"framer/internal/core"
-	pb "framer/internal/proto"
 	"time"
 	"unicode/utf8"
 
@@ -16,7 +15,7 @@ const DescriptionMaxLength = 500
 
 type Title string
 type Description string
-type FrameStatus int32
+type FrameStatus int16
 
 const (
 	Active  FrameStatus = 1
@@ -64,15 +63,15 @@ func CreateUserID(userId string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func fromRpc(req *pb.CreateFrameRequest, userId uuid.UUID, id uuid.NullUUID) (*Model, error) {
+func create(title, description string, userId uuid.UUID, id uuid.NullUUID) (*Model, error) {
 	var errs []error
 
-	title, err := CreateTitle(req.Frame.Title)
+	t, err := CreateTitle(title)
 	if err != nil {
 		errs = append(errs, err)
 	}
 
-	description, err := CreateDescription(req.Frame.Description)
+	d, err := CreateDescription(description)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -82,8 +81,8 @@ func fromRpc(req *pb.CreateFrameRequest, userId uuid.UUID, id uuid.NullUUID) (*M
 	}
 
 	m := &Model{
-		Title:       title,
-		Description: description,
+		Title:       t,
+		Description: d,
 		CreatedAt:   time.Now(),
 		ModifiedAt:  time.Now(),
 		UserID:      userId,

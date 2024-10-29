@@ -14,12 +14,12 @@ func Seed() (uuid.UUID, error) {
 		return uuid.UUID{}, err
 	}
 
-	Service.Register(context.Background(), RegisterParams{
+	Service.Queries.Register(context.Background(), RegisterParams{
 		Email:        "test@test.com",
 		PasswordHash: sql.NullString{String: string(passwordHash), Valid: true},
 	})
 
-	user, err := Service.GetUserByEmail(context.Background(), "test@test.com")
+	user, err := Service.Queries.GetUserByEmail(context.Background(), "test@test.com")
 	if err != nil {
 		return uuid.UUID{}, err
 	}

@@ -5,11 +5,11 @@ package public;
 option go_package = "internal/proto";
 
 enum FrameStatus {
-    Deleted = 0;
+    Archived = 0;
     Active = 1;
 }
 
-enum FrameType {
+enum ContentType {
     Image = 0;
     Video = 1;
     Link = 2;
@@ -18,20 +18,44 @@ enum FrameType {
 
 // Represents a user in the app
 message AppUser {
-    string id = 1;                     // UUID
-    string email = 2;                  // Email
-    string password_hash = 3;          // Password Hash
-    string name = 4;                   // Name
+    string access_token = 1;
+    string refresh_token = 2;
 }
 
 // Represents a file in the app
-message File {
+message CreateFileRequest {
     string id = 1;                     // UUID
     string file_name = 2;              // File Name
     bytes content = 3;                 // File Data
 }
 
+message File {
+    string id = 1;                     // UUID
+    string file_name = 2;              // File Name
+}
+
 // Represents a frame in the app
+message CreateFrameRequest {
+    string title = 2;                  // Title
+    string description = 3;            // Description
+    string user_id = 4;                // UUID of the user
+    string content = 5;                // Content
+    FrameStatus frame_status = 6;      // Frame Status
+    ContentType content_type = 7;      // Content Type
+    CreateFileRequest file = 8;                     // File
+}
+
+message UpdateFrameRequest {
+    string id = 1;                     // UUID
+    string title = 2;                  // Title
+    string description = 3;            // Description
+    string user_id = 4;                // UUID of the user
+    string content = 5;                // Content
+    FrameStatus frame_status = 6;      // Frame Status
+    ContentType content_type = 7;      // Content Type
+    CreateFileRequest file = 8;                     // File
+}
+
 message Frame {
     string id = 1;                     // UUID
     string title = 2;                  // Title
@@ -39,7 +63,7 @@ message Frame {
     string user_id = 4;                // UUID of the user
     string content = 5;                // Content
     FrameStatus frame_status = 6;      // Frame Status
-    FrameType frame_type = 7;          // Frame Type
+    ContentType content_type = 7;      // Content Type
     File file = 8;                     // File
 }
 
@@ -55,8 +79,15 @@ message DeleteByIdRequest {
 message EmptyResponse {}
 
 // AppUser CRUD requests
-message CreateAppUserRequest {
-    AppUser app_user = 1;
+message RegisterRequest {
+    string email = 1;
+    string password = 2;
+    string name = 3;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
 }
 
 message UpdateAppUserRequest {
@@ -67,11 +98,6 @@ message ListAppUsersResponse {
     repeated AppUser app_users = 1;
 }
 
-// File CRUD requests
-message CreateFileRequest {
-    File file = 1;
-}
-
 message UpdateFileRequest {
     File file = 1;
 }
@@ -80,14 +106,6 @@ message ListFilesResponse {
     repeated File files = 1;
 }
 
-// Frame CRUD requests
-message CreateFrameRequest {
-    Frame frame = 1;
-}
-
-message UpdateFrameRequest {
-    Frame frame = 1;
-}
 
 message ListFramesResponse {
     repeated Frame frames = 1;
@@ -95,7 +113,8 @@ message ListFramesResponse {
 
 // gRPC Services
 service AppUserService {
-    rpc CreateAppUser(CreateAppUserRequest) returns (AppUser);
+    rpc Register(RegisterRequest) returns (EmptyResponse);
+    rpc Login(LoginRequest) returns (AppUser);
 }
 
 service FrameService {

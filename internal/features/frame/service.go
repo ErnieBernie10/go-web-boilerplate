@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"framer/internal/core"
 	"framer/internal/database"
 	"framer/internal/features/file"
 
@@ -15,8 +16,8 @@ type DeleteFrameCommand struct {
 	UserID uuid.UUID
 }
 
-func DeleteFrame(ctx context.Context, q *database.Queries, cmd DeleteFrameCommand) error {
-	frame, err := q.GetFrame(ctx, database.GetFrameParams{
+func DeleteFrame(ctx context.Context, uow *database.UnitOfWork, cmd DeleteFrameCommand) error {
+	frame, err := uow.Queries.GetFrame(ctx, database.GetFrameParams{
 		ID:     cmd.ID,
 		UserID: cmd.UserID,
 	})
@@ -24,7 +25,7 @@ func DeleteFrame(ctx context.Context, q *database.Queries, cmd DeleteFrameComman
 		return err
 	}
 
-	err = q.DeleteFrame(ctx, database.DeleteFrameParams{
+	err = uow.Queries.DeleteFrame(ctx, database.DeleteFrameParams{
 		ID:     cmd.ID,
 		UserID: cmd.UserID,
 	})
@@ -32,13 +33,13 @@ func DeleteFrame(ctx context.Context, q *database.Queries, cmd DeleteFrameComman
 		return err
 	}
 
-	err = file.DeleteFile(ctx, q, file.DeleteFileCommand{
+	err = file.DeleteFile(ctx, uow, file.DeleteFileCommand{
 		ID:     frame.FileID.UUID,
 		UserID: cmd.UserID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil
+			return errors.Join(core.ErrNotFound, errors.New("frame not found"))
 		}
 		return err
 	}
@@ -46,8 +47,9 @@ func DeleteFrame(ctx context.Context, q *database.Queries, cmd DeleteFrameComman
 	return nil
 }
 
-func SaveFrameWithFile(ctx context.Context, q *database.Queries, cmd *Model, f []byte, fileName string) (uuid.UUID, error) {
-	fileID, err := file.UploadFile(ctx, q, file.UploadFileCommand{
+func SaveFrameWithFile(ctx context.Context, uow *database.UnitOfWork, cmd *Model, f []byte, fileName string) (uuid.UUID, error) {
+
+	fileID, err := file.UploadFile(ctx, uow, file.UploadFileCommand{
 		FileName: fileName,
 		UserID:   cmd.UserID,
 		Body:     f,
@@ -62,7 +64,7 @@ func SaveFrameWithFile(ctx context.Context, q *database.Queries, cmd *Model, f [
 		Valid: true,
 	}
 
-	id, err := SaveFrame(ctx, q, cmd)
+	id, err := SaveFrame(ctx, uow, cmd)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -70,9 +72,9 @@ func SaveFrameWithFile(ctx context.Context, q *database.Queries, cmd *Model, f [
 	return id, nil
 }
 
-func SaveFrame(ctx context.Context, q *database.Queries, cmd *Model) (uuid.UUID, error) {
+func SaveFrame(ctx context.Context, uow *database.UnitOfWork, cmd *Model) (uuid.UUID, error) {
 	if cmd.FileID.Valid {
-		_, err := q.GetFileByID(ctx, cmd.FileID.UUID)
+		_, err := uow.Queries.GetFileByID(ctx, cmd.FileID.UUID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return uuid.Nil, errors.New("file not found")
@@ -81,11 +83,11 @@ func SaveFrame(ctx context.Context, q *database.Queries, cmd *Model) (uuid.UUID,
 		}
 	}
 
-	id, err := q.SaveFrame(ctx, database.SaveFrameParams{
+	id, err := uow.Queries.SaveFrame(ctx, database.SaveFrameParams{
 		ID:          cmd.ID,
 		Title:       string(cmd.Title),
 		Description: string(cmd.Description),
-		FrameStatus: int32(cmd.FrameStatus),
+		FrameStatus: int16(cmd.FrameStatus),
 		UserID:      cmd.UserID,
 		FileID:      cmd.FileID,
 	})

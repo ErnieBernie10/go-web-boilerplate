@@ -113,7 +113,7 @@ func TestHealth(t *testing.T) {
 func TestGetFrames(t *testing.T) {
 	ctx := context.Background()
 
-	_, err := Service.SaveFrame(ctx, SaveFrameParams{
+	_, err := Service.Queries.SaveFrame(ctx, SaveFrameParams{
 		Title:       "Test",
 		Description: "Test",
 		UserID:      userID,
@@ -123,7 +123,7 @@ func TestGetFrames(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := Service.GetFrames(ctx, userID)
+	res, err := Service.Queries.GetFrames(ctx, userID)
 	if err != nil {
 		t.Fatal(err)
 	}

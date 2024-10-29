@@ -36,7 +36,9 @@ type Frame struct {
 	CreatedAt   time.Time
 	ModifiedAt  time.Time
 	UserID      uuid.UUID
-	FrameStatus int32
+	FrameStatus int16
+	ContentType int16
+	Content     string
 	FileID      uuid.NullUUID
 }
 

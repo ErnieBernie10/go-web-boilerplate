@@ -11,25 +11,28 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-var Db *sql.DB
+var Service *DbService
 
-var Service *Queries
-
-func Shutdown() {
-	Db.Close()
+type DbService struct {
+	Db      *sql.DB
+	Queries *Queries
 }
 
-func NewDb(connectionString string) error {
+func Shutdown() {
+	Service.Db.Close()
+}
+
+func NewDb(connectionString string) (*DbService, error) {
 	var err error
-	Db, err = sql.Open("pgx", connectionString)
+	Service := &DbService{}
+	Service.Db, err = sql.Open("pgx", connectionString)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	Service = New(Db)
-	Service.db = Db
+	Service.Queries = New(Service.Db)
 
-	return nil
+	return Service, nil
 }
 
 // Health checks the health of the database connection by pinging the database.
@@ -41,7 +44,7 @@ func Health() map[string]string {
 	stats := make(map[string]string)
 
 	// Ping the database
-	err := Db.PingContext(ctx)
+	err := Service.Db.PingContext(ctx)
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
@@ -54,7 +57,7 @@ func Health() map[string]string {
 	stats["message"] = "It's healthy"
 
 	// Get database stats (like open connections, in use, idle, etc.)
-	dbStats := Db.Stats()
+	dbStats := Service.Db.Stats()
 	stats["open_connections"] = strconv.Itoa(dbStats.OpenConnections)
 	stats["in_use"] = strconv.Itoa(dbStats.InUse)
 	stats["idle"] = strconv.Itoa(dbStats.Idle)

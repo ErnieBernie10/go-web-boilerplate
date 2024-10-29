@@ -7,12 +7,16 @@ package database
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 const deleteFrame = `-- name: DeleteFrame :exec
-delete from frame where id = $1 and user_id = $2
+delete from frame
+where id = $1
+  and user_id = $2
 `
 
 type DeleteFrameParams struct {
@@ -26,9 +30,11 @@ func (q *Queries) DeleteFrame(ctx context.Context, arg DeleteFrameParams) error 
 }
 
 const getFrame = `-- name: GetFrame :one
-select id, title, description, created_at, modified_at, user_id, frame_status, file_id
+select frame.id, title, description, frame.created_at, frame.modified_at, user_id, frame_status, content_type, content, file_id, f.id, file_name, f.created_at, f.modified_at
 from frame
-where id = $1 and user_id = $2
+  join file f on f.id = frame.file_id
+where frame.id = $1
+  and user_id = $2
 `
 
 type GetFrameParams struct {
@@ -36,9 +42,26 @@ type GetFrameParams struct {
 	UserID uuid.UUID
 }
 
-func (q *Queries) GetFrame(ctx context.Context, arg GetFrameParams) (Frame, error) {
+type GetFrameRow struct {
+	ID           uuid.UUID
+	Title        string
+	Description  string
+	CreatedAt    time.Time
+	ModifiedAt   time.Time
+	UserID       uuid.UUID
+	FrameStatus  int16
+	ContentType  int16
+	Content      string
+	FileID       uuid.NullUUID
+	ID_2         uuid.UUID
+	FileName     sql.NullString
+	CreatedAt_2  time.Time
+	ModifiedAt_2 time.Time
+}
+
+func (q *Queries) GetFrame(ctx context.Context, arg GetFrameParams) (GetFrameRow, error) {
 	row := q.db.QueryRowContext(ctx, getFrame, arg.ID, arg.UserID)
-	var i Frame
+	var i GetFrameRow
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
@@ -47,25 +70,50 @@ func (q *Queries) GetFrame(ctx context.Context, arg GetFrameParams) (Frame, erro
 		&i.ModifiedAt,
 		&i.UserID,
 		&i.FrameStatus,
+		&i.ContentType,
+		&i.Content,
 		&i.FileID,
+		&i.ID_2,
+		&i.FileName,
+		&i.CreatedAt_2,
+		&i.ModifiedAt_2,
 	)
 	return i, err
 }
 
 const getFrames = `-- name: GetFrames :many
-select id, title, description, created_at, modified_at, user_id, frame_status, file_id
-from frame where user_id = $1
+select frame.id, title, description, frame.created_at, frame.modified_at, user_id, frame_status, content_type, content, file_id, f.id, file_name, f.created_at, f.modified_at
+from frame
+    join file f on f.id = frame.file_id
+where user_id = $1
 `
 
-func (q *Queries) GetFrames(ctx context.Context, userID uuid.UUID) ([]Frame, error) {
+type GetFramesRow struct {
+	ID           uuid.UUID
+	Title        string
+	Description  string
+	CreatedAt    time.Time
+	ModifiedAt   time.Time
+	UserID       uuid.UUID
+	FrameStatus  int16
+	ContentType  int16
+	Content      string
+	FileID       uuid.NullUUID
+	ID_2         uuid.UUID
+	FileName     sql.NullString
+	CreatedAt_2  time.Time
+	ModifiedAt_2 time.Time
+}
+
+func (q *Queries) GetFrames(ctx context.Context, userID uuid.UUID) ([]GetFramesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getFrames, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Frame
+	var items []GetFramesRow
 	for rows.Next() {
-		var i Frame
+		var i GetFramesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
@@ -74,7 +122,13 @@ func (q *Queries) GetFrames(ctx context.Context, userID uuid.UUID) ([]Frame, err
 			&i.ModifiedAt,
 			&i.UserID,
 			&i.FrameStatus,
+			&i.ContentType,
+			&i.Content,
 			&i.FileID,
+			&i.ID_2,
+			&i.FileName,
+			&i.CreatedAt_2,
+			&i.ModifiedAt_2,
 		); err != nil {
 			return nil, err
 		}
@@ -115,7 +169,7 @@ type SaveFrameParams struct {
 	Title       string
 	Description string
 	UserID      uuid.UUID
-	FrameStatus int32
+	FrameStatus int16
 	FileID      uuid.NullUUID
 }
 

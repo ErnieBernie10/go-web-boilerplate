@@ -1,29 +1,65 @@
 package main
 
 import (
+	"context"
 	"framer/internal/database"
+	"framer/internal/features/auth"
 	"framer/internal/features/frame"
+	"framer/internal/logger"
 	pb "framer/internal/proto"
 	"log"
 	"net"
 	"os"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+
 	"google.golang.org/grpc"
 )
 
 func main() {
-	grpcServer := grpc.NewServer()
-	pb.RegisterFrameServiceServer(grpcServer, &frame.FrameController{})
+	ctx := context.Background()
+	port := os.Getenv("GRPC_PORT")
 
-	databaseUrl := os.Getenv("DATABASE_URL")
-	database.NewDb(databaseUrl)
+	server := NewServer(ctx)
 
-	lis, err := net.Listen("tcp", ":8081")
+	defer Shutdown()
+
+	lis, err := net.Listen("tcp", ":"+port)
+	defer lis.Close()
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	log.Printf("grpc server listening on port %s", lis.Addr().String())
-	if err := grpcServer.Serve(lis); err != nil {
+	if err := server.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+}
+
+func NewServer(ctx context.Context) *grpc.Server {
+	zapLogger := logger.NewLogger()
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_zap.UnaryServerInterceptor(zapLogger),
+		)),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+			grpc_zap.StreamServerInterceptor(zapLogger),
+		)),
+	)
+
+	databaseUrl := os.Getenv("DATABASE_URL")
+	db, err := database.NewDb(databaseUrl)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	pb.RegisterFrameServiceServer(grpcServer, &frame.FrameController{Db: *db})
+	pb.RegisterAppUserServiceServer(grpcServer, &auth.AuthController{Db: *db})
+
+	return grpcServer
+}
+
+func Shutdown() {
+	database.Shutdown()
 }

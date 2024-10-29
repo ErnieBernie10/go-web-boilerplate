@@ -30,3 +30,33 @@ func Transactional(ctx context.Context, db *sql.DB, fn func(tx *sql.Tx) error) (
 	err = fn(tx)
 	return err
 }
+
+// UnitOfWork struct to encapsulate transaction and repositories
+type UnitOfWork struct {
+	tx      *sql.Tx
+	Queries *Queries
+}
+
+// NewUnitOfWork initializes a new UnitOfWork with repositories
+func NewUnitOfWork() (*UnitOfWork, error) {
+	db := Service.Db
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	uow := &UnitOfWork{
+		tx:      tx,
+		Queries: Service.Queries.WithTx(tx),
+	}
+	return uow, nil
+}
+
+// Commit commits the transaction
+func (u *UnitOfWork) Commit() error {
+	return u.tx.Commit()
+}
+
+// Rollback rolls back the transaction
+func (u *UnitOfWork) Rollback() error {
+	return u.tx.Rollback()
+}

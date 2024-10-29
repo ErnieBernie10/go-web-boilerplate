@@ -1,20 +1,30 @@
 # Simple Makefile for a Go project
 include .env
+export $(shell sed 's/=.*//' .env)
 
 # Build the application
 all: build
 
 build:
 	@echo "Building..."
-	
-	
+
+
 	@templ generate
-	@go build -o main cmd/api/main.go
+	@go build -o api cmd/api/main.go
+	@go build -o rpc cmd/rpc/main.go
 
 # Run the application
 run:
+	@trap "kill 0" SIGINIT; \
+	$(MAKE) run-rpc & \
+	$(MAKE) run-api & \
+	wait
+
+run-api:
 	@go run cmd/api/main.go
 
+run-rpc:
+	@go run cmd/rpc/main.go
 
 # Create DB container
 docker-run:

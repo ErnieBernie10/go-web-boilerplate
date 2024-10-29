@@ -1,7 +1,6 @@
 package frame
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"framer/internal/api"
@@ -10,7 +9,6 @@ import (
 	"framer/internal/util"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -28,8 +26,6 @@ type GetFrameResponseDto struct {
 	ID          uuid.UUID     `json:"id"`
 	Title       string        `json:"title"`
 	Description string        `json:"description"`
-	CreatedAt   time.Time     `json:"createdAt"`
-	ModifiedAt  time.Time     `json:"modifiedAt"`
 	UserID      uuid.UUID     `json:"userId"`
 	FrameStatus int           `json:"frameStatus"`
 	FileID      uuid.NullUUID `json:"fileId"`
@@ -58,7 +54,7 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 		api.HandleError(r, w, err)
 	}
 
-	e, err := database.Service.GetFrame(ctx, database.GetFrameParams{
+	e, err := database.Service.Queries.GetFrame(ctx, database.GetFrameParams{
 		ID:     id,
 		UserID: user.ID,
 	})
@@ -72,8 +68,6 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 		ID:          e.ID,
 		Title:       e.Title,
 		Description: e.Description,
-		CreatedAt:   e.CreatedAt,
-		ModifiedAt:  e.ModifiedAt,
 		UserID:      e.UserID,
 		FrameStatus: int(e.FrameStatus),
 		FileID:      e.FileID,
@@ -90,19 +84,17 @@ func getFrameHandler(w http.ResponseWriter, r *http.Request) {
 // @Router /api/frame [get]
 func getFramesHandler(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
-	fs, err := database.Service.GetFrames(r.Context(), user.ID)
+	fs, err := database.Service.Queries.GetFrames(r.Context(), user.ID)
 	if err != nil {
 		api.HandleError(r, w, err)
 		return
 	}
 
-	dtos := util.Map(fs, func(e database.Frame) *GetFrameResponseDto {
+	dtos := util.Map(fs, func(e database.GetFramesRow) *GetFrameResponseDto {
 		return &GetFrameResponseDto{
 			ID:          e.ID,
 			Title:       e.Title,
 			Description: e.Description,
-			CreatedAt:   e.CreatedAt,
-			ModifiedAt:  e.ModifiedAt,
 			UserID:      e.UserID,
 			FrameStatus: int(e.FrameStatus),
 			FileID:      e.FileID,
@@ -135,7 +127,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.Service.GetFrame(r.Context(), database.GetFrameParams{
+	_, err = database.Service.Queries.GetFrame(r.Context(), database.GetFrameParams{
 		ID:     id,
 		UserID: user.ID,
 	})
@@ -150,19 +142,26 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
-		id, err := SaveFrame(r.Context(), database.Service.WithTx(tx), entity)
-		if err != nil {
-			return err
-		}
-		entity.ID = id
-		return nil
-	})
-
+	uow, err := database.NewUnitOfWork()
+	defer uow.Rollback()
 	if err != nil {
-		api.HandleError(r, w, err)
+		api.HandleError(r, w, errors.Join(err, errors.New("failed to save frame")))
 		return
 	}
+
+	id, err = SaveFrame(r.Context(), uow, entity)
+	if err != nil {
+		api.HandleError(r, w, errors.Join(err, errors.New("failed to save frame")))
+		return
+	}
+	entity.ID = id
+
+	if err != nil {
+		api.HandleError(r, w, errors.Join(err, errors.New("failed to save frame")))
+		return
+	}
+
+	uow.Commit()
 
 	api.WriteUpdatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", id.String(), 1), api.CreatedResponse(id.String()))
 }
@@ -188,18 +187,26 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
-		id, err := SaveFrame(r.Context(), database.Service.WithTx(tx), entity)
-		if err != nil {
-			return err
-		}
-		entity.ID = id
-		return nil
-	})
+	uow, err := database.NewUnitOfWork()
+	defer uow.Rollback()
+	if err != nil {
+		api.HandleError(r, w, errors.Join(err, errors.New("failed to create frame")))
+		return
+	}
+
+	id, err := SaveFrame(r.Context(), uow, entity)
+	if err != nil {
+		api.HandleError(r, w, errors.Join(err, errors.New("failed to create frame")))
+		return
+	}
+
+	entity.ID = id
 	if err != nil {
 		api.HandleError(r, w, errors.Join(core.ErrNotFound, err))
 		return
 	}
+
+	uow.Commit()
 
 	api.WriteCreatedResponse(w, strings.Replace(api.GetFrameApiPath, "{id}", entity.ID.String(), 1), api.CreatedResponse(entity.ID.String()))
 }
@@ -213,7 +220,7 @@ func deleteFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.Service.GetFrame(r.Context(), database.GetFrameParams{
+	_, err = database.Service.Queries.GetFrame(r.Context(), database.GetFrameParams{
 		ID:     id,
 		UserID: user.ID,
 	})
@@ -222,17 +229,19 @@ func deleteFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
-		return DeleteFrame(r.Context(), database.Service.WithTx(tx), DeleteFrameCommand{
-			ID:     id,
-			UserID: user.ID,
-		})
-	})
+	uow, err := database.NewUnitOfWork()
+	defer uow.Rollback()
 
+	err = DeleteFrame(r.Context(), uow, DeleteFrameCommand{
+		ID:     id,
+		UserID: user.ID,
+	})
 	if err != nil {
 		api.HandleError(r, w, errors.Join(errors.New("failed to delete frame"), err))
 		return
 	}
+
+	uow.Commit()
 
 	api.WriteOkResponse(w, nil)
 }

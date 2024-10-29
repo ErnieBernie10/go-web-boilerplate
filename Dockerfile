@@ -1,5 +1,7 @@
 FROM golang:1.23.2-bookworm
 
+SHELL ["/bin/bash", "-c"]
+
 # Create a user for devcontainer
 RUN apt-get update && apt-get install -y make stow postgresql-common
 RUN yes | /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh

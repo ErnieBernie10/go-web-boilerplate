@@ -21,13 +21,13 @@ type UploadFileCommand struct {
 	Body     []byte
 }
 
-func DeleteFile(ctx context.Context, q *database.Queries, cmd DeleteFileCommand) error {
-	file, err := q.GetFileByID(ctx, cmd.ID)
+func DeleteFile(ctx context.Context, uow *database.UnitOfWork, cmd DeleteFileCommand) error {
+	file, err := uow.Queries.GetFileByID(ctx, cmd.ID)
 	if err != nil {
 		return err
 	}
 
-	err = q.DeleteFile(ctx, cmd.ID)
+	err = uow.Queries.DeleteFile(ctx, cmd.ID)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func DeleteFile(ctx context.Context, q *database.Queries, cmd DeleteFileCommand)
 	return nil
 }
 
-func UploadFile(ctx context.Context, q *database.Queries, cmd UploadFileCommand) (uuid.UUID, error) {
+func UploadFile(ctx context.Context, uow *database.UnitOfWork, cmd UploadFileCommand) (uuid.UUID, error) {
 	uploadDir := filepath.Join(baseUploadDir, cmd.UserID.String())
 
 	id := uuid.New().String()
@@ -57,7 +57,7 @@ func UploadFile(ctx context.Context, q *database.Queries, cmd UploadFileCommand)
 		return uuid.Nil, err
 	}
 
-	err = q.CreateFile(ctx, database.CreateFileParams{
+	err = uow.Queries.CreateFile(ctx, database.CreateFileParams{
 		ID:       uuid.MustParse(id),
 		FileName: sql.NullString{String: filename, Valid: true},
 	})

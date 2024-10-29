@@ -6,10 +6,12 @@
   "postCreateCommand": "go mod tidy",
   "remoteUser": "root",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2.12.0": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2.12.0": {},
+    "ghcr.io/devcontainers/features/sshd:1": {}
   },
   "forwardPorts": [
-    8080
+    8080,
+    2222
   ],
   "customizations": {
     "vscode": {

@@ -1,7 +1,6 @@
 package file
 
 import (
-	"database/sql"
 	"errors"
 	"io"
 	"net/http"
@@ -10,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 
 	"framer/internal/api"
 	"framer/internal/core"
@@ -46,15 +44,15 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var id uuid.UUID
-	err = database.Transactional(r.Context(), database.Db, func(tx *sql.Tx) error {
-		var err error
-		id, err = UploadFile(r.Context(), database.Service.WithTx(tx), UploadFileCommand{
-			FileName: filename,
-			UserID:   user.ID,
-			Body:     body,
-		})
-		return err
+	uow, err := database.NewUnitOfWork()
+	if err != nil {
+		api.HandleError(r, w, err)
+	}
+
+	id, err := UploadFile(r.Context(), uow, UploadFileCommand{
+		FileName: filename,
+		UserID:   user.ID,
+		Body:     body,
 	})
 
 	if err != nil {

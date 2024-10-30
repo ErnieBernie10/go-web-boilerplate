@@ -17,7 +17,7 @@ func FrameViewHandler(r chi.Router) {
 func handleGetFrame(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
 
-	frames, err := rpc.Client.Frame.ListFrames(view.ContextWithToken(r), nil)
+	frames, err := rpc.Client.Frame.ListFrames(view.ContextWithToken(r.Context(), view.GetTokens(r.Context())), nil)
 	if err != nil {
 		view.Render(w, r, view.Message("Something went wrong"), user)
 	}

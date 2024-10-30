@@ -54,8 +54,8 @@ func NewServer(ctx context.Context) *grpc.Server {
 		panic(err.Error())
 	}
 
-	pb.RegisterFrameServiceServer(grpcServer, &frame.FrameController{Db: *db})
-	pb.RegisterAppUserServiceServer(grpcServer, &auth.AuthController{Db: *db})
+	pb.RegisterFrameServiceServer(grpcServer, &frame.FrameController{Db: db})
+	pb.RegisterAppUserServiceServer(grpcServer, &auth.AuthController{Db: db})
 
 	return grpcServer
 }

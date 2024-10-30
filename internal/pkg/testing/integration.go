@@ -1,7 +1,10 @@
-package database
+package testing
 
 import (
 	"context"
+	"framer/internal/pkg"
+	"framer/internal/pkg/database"
+	"framer/internal/pkg/view"
 	"log"
 	"net/url"
 	"testing"
@@ -9,16 +12,14 @@ import (
 
 	"github.com/amacneil/dbmate/v2/pkg/dbmate"
 	_ "github.com/amacneil/dbmate/v2/pkg/driver/postgres"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"google.golang.org/grpc/metadata"
 )
-
-var db *DbService
-
-var userID uuid.UUID
 
 func MustStartPostgresContainer() (*postgres.PostgresContainer, error) {
 	var dbContainer *postgres.PostgresContainer
@@ -70,68 +71,61 @@ func MustStartPostgresContainer() (*postgres.PostgresContainer, error) {
 	return dbContainer, err
 }
 
-func TestMain(m *testing.M) {
+func SetupTests(m *testing.M) (*database.DbService, uuid.UUID, func(context.Context) error) {
 	dbContainer, err := MustStartPostgresContainer()
 	if err != nil {
 		log.Fatalf("could not start postgres container: %v", err)
 	}
 
-	db, err = NewDb(dbContainer.MustConnectionString(context.Background()))
+	db, err := database.NewDb(dbContainer.MustConnectionString(context.Background()))
 	if err != nil {
 		log.Fatalln("could create db", err)
 	}
 
-	userID, err = Seed(db)
+	userID, err := database.Seed(db)
 	if err != nil {
 		log.Fatalf("could not seed user: %v", err)
 	}
-	m.Run()
 
-	if dbContainer.Terminate(context.Background()) != nil {
-		log.Fatalf("could not teardown postgres container: %v", err)
-	}
+	return db, userID, dbContainer.Terminate
 }
 
-func TestHealth(t *testing.T) {
-
-	stats := db.Health()
-
-	if stats["status"] != "up" {
-		t.Fatalf("expected status to be up, got %s", stats["status"])
+func WithMockUser(ctx context.Context, userId uuid.UUID) (context.Context, error) {
+	expirationTime := time.Now().Add(1 * time.Hour)
+	claims := &pkg.Claims{
+		Email: "john@doe.com",
+		ID:    userId,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
 	}
 
-	if _, ok := stats["error"]; ok {
-		t.Fatalf("expected error not to be present")
+	refreshClaim := &pkg.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaim)
+
+	tokenString, err := token.SignedString(pkg.JwtSecret)
+	if err != nil {
+		return nil, err
 	}
 
-	if stats["message"] != "It's healthy" {
-		t.Fatalf("expected message to be 'It's healthy', got %s", stats["message"])
+	refreshTokenString, err := refresh.SignedString(pkg.JwtSecret)
+	if err != nil {
+		return nil, err
 	}
-}
 
-func TestGetFrames(t *testing.T) {
-	ctx := context.Background()
-
-	_, err := db.Queries.SaveFrame(ctx, SaveFrameParams{
-		Title:       "Test",
-		Description: "Test",
-		UserID:      userID,
-		FrameStatus: 1,
-		ID:          uuid.New(),
-		ContentType: int16(1),
-		Content:     "",
-		FileID:      uuid.NullUUID{},
+	ctx = view.ContextWithToken(ctx, func() (string, string) {
+		return tokenString, refreshTokenString
 	})
-	if err != nil {
-		t.Fatal(err)
+
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if ok {
+		ctx = metadata.NewIncomingContext(ctx, md)
 	}
 
-	res, err := db.Queries.GetFrames(ctx, userID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(res) != 1 {
-		t.Fatal("Res is not length 1")
-	}
+	return ctx, nil
 }

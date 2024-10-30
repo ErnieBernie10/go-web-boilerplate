@@ -2,6 +2,9 @@ package frame
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"framer/internal/pkg"
 	"framer/internal/pkg/database"
 	"framer/internal/pkg/rpc"
 	pb "framer/internal/proto"
@@ -11,7 +14,7 @@ import (
 
 type FrameController struct {
 	pb.FrameServiceServer
-	Db database.DbService
+	Db *database.DbService
 }
 
 // DeleteFrame implements proto.FrameServiceServer.
@@ -153,6 +156,9 @@ func (c *FrameController) GetFrame(ctx context.Context, req *pb.GetByIdRequest) 
 		UserID: claims.ID,
 	})
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.Join(pkg.ErrNotFound, errors.New("frame not found"))
+		}
 		return nil, err
 	}
 

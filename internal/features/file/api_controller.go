@@ -2,6 +2,9 @@ package file
 
 import (
 	"errors"
+	"framer/internal/pkg"
+	"framer/internal/pkg/api"
+	"framer/internal/pkg/database"
 	"io"
 	"net/http"
 	"os"
@@ -9,10 +12,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-
-	"framer/internal/api"
-	"framer/internal/core"
-	"framer/internal/database"
 )
 
 func FileApiHandler(r chi.Router) {
@@ -34,13 +33,13 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 	filename := chi.URLParam(r, "filename")
 
 	if filename == "" {
-		api.HandleError(r, w, errors.Join(core.ErrValidation, errors.New("filename is required")))
+		api.HandleError(r, w, errors.Join(pkg.ErrValidation, errors.New("filename is required")))
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrValidation, err))
 		return
 	}
 
@@ -70,7 +69,7 @@ func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	userDir := filepath.Join(baseUploadDir, user.ID.String())
 	files, err := os.ReadDir(userDir)
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrNotFound, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrNotFound, err))
 		return
 	}
 
@@ -81,5 +80,5 @@ func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	api.HandleError(r, w, errors.Join(core.ErrNotFound, errors.New("file not found")))
+	api.HandleError(r, w, errors.Join(pkg.ErrNotFound, errors.New("file not found")))
 }

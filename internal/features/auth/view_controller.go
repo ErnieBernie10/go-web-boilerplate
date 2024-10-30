@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"framer/internal/api"
-	"framer/internal/core"
-	"framer/internal/rpc"
-	"framer/internal/view"
+	"framer/internal/pkg"
+	"framer/internal/pkg/api"
+	"framer/internal/pkg/rpc"
+	"framer/internal/pkg/view"
 	"net/http"
 	"time"
 
@@ -12,10 +12,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 )
-
-type authClient struct {
-	pb.AppUserServiceClient
-}
 
 var email = "email"
 var password = "password"
@@ -103,7 +99,7 @@ func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Step 3: Set the JWT token in an HTTP-only cookie.
 	http.SetCookie(w, &http.Cookie{
-		Name:     string(core.TokenContextKey),  // Cookie name
+		Name:     string(pkg.TokenContextKey),   // Cookie name
 		Value:    response.AccessToken,          // JWT token value
 		Expires:  time.Now().Add(time.Hour * 1), // Cookie expiration time (same as JWT)
 		HttpOnly: true,                          // Make the cookie HTTP-only
@@ -112,7 +108,7 @@ func handlePostLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     string(core.RefreshContextKey), // Cookie name
+		Name:     string(pkg.RefreshContextKey),  // Cookie name
 		Value:    response.RefreshToken,          // JWT token value
 		Expires:  time.Now().Add(time.Hour * 72), // Cookie expiration time (same as JWT)
 		HttpOnly: true,                           // Make the cookie HTTP-only

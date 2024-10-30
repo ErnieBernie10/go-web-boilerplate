@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"framer/internal/core"
+	"framer/internal/pkg"
 )
 
 var (
@@ -18,16 +18,16 @@ var (
 
 func refreshTokens(accessToken, refreshToken string) (string, string, error) {
 	expirationTime := time.Now().Add(5 * time.Minute) // Set token expiration time.
-	if os.Getenv("APP_ENV") == string(core.Development) {
+	if os.Getenv("APP_ENV") == string(pkg.Development) {
 		expirationTime = time.Now().Add(1 * time.Hour)
 	}
-	claims := &core.Claims{
+	claims := &pkg.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}
 
-	refreshClaim := &core.Claims{
+	refreshClaim := &pkg.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
@@ -37,12 +37,12 @@ func refreshTokens(accessToken, refreshToken string) (string, string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaim)
 
-	tokenString, err := token.SignedString(core.JwtSecret)
+	tokenString, err := token.SignedString(pkg.JwtSecret)
 	if err != nil {
 		return "", "", ErrInvalidLogin
 	}
 
-	refreshTokenString, err := refresh.SignedString(core.JwtSecret)
+	refreshTokenString, err := refresh.SignedString(pkg.JwtSecret)
 	if err != nil {
 		return "", "", ErrInvalidLogin
 	}
@@ -57,10 +57,10 @@ func login(id uuid.UUID, email, password, hash string) (string, string, error) {
 	}
 
 	expirationTime := time.Now().Add(5 * time.Minute) // Set token expiration time.
-	if os.Getenv("APP_ENV") == string(core.Development) {
+	if os.Getenv("APP_ENV") == string(pkg.Development) {
 		expirationTime = time.Now().Add(1 * time.Hour)
 	}
-	claims := &core.Claims{
+	claims := &pkg.Claims{
 		Email: email,
 		ID:    id,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -68,7 +68,7 @@ func login(id uuid.UUID, email, password, hash string) (string, string, error) {
 		},
 	}
 
-	refreshClaim := &core.Claims{
+	refreshClaim := &pkg.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
@@ -78,12 +78,12 @@ func login(id uuid.UUID, email, password, hash string) (string, string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaim)
 
-	tokenString, err := token.SignedString(core.JwtSecret)
+	tokenString, err := token.SignedString(pkg.JwtSecret)
 	if err != nil {
 		return "", "", ErrInvalidLogin
 	}
 
-	refreshTokenString, err := refresh.SignedString(core.JwtSecret)
+	refreshTokenString, err := refresh.SignedString(pkg.JwtSecret)
 	if err != nil {
 		return "", "", ErrInvalidLogin
 	}

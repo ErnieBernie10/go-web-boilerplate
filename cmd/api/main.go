@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"framer/internal/database"
-	"framer/internal/rpc"
-	"framer/internal/server"
+	"framer/internal/api"
+	"framer/internal/pkg/database"
+	"framer/internal/pkg/rpc"
 	"net/http"
 	"os"
 	"strconv"
@@ -39,7 +39,7 @@ func NewServer(ctx context.Context) *http.Server {
 	// Declare Server config
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
-		Handler:      server.RegisterRoutes(),
+		Handler:      api.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,

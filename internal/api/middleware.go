@@ -1,9 +1,9 @@
-package server
+package api
 
 import (
 	"context"
-	"framer/internal/core"
-	"framer/internal/view"
+	"framer/internal/pkg"
+	"framer/internal/pkg/view"
 	"net/http"
 	"strings"
 
@@ -13,30 +13,30 @@ import (
 func OptionalUserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Step 1: Get the JWT token from the "token" tokenCookie.
-		refreshStr := getCookieValue(r, string(core.RefreshContextKey))
+		refreshStr := getCookieValue(r, string(pkg.RefreshContextKey))
 		tokenStr := getTokenString(r)
 
 		if tokenStr == "" {
-			ctx := context.WithValue(r.Context(), core.UserContextKey, nil)
+			ctx := context.WithValue(r.Context(), pkg.UserContextKey, nil)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 
 		// Step 2: Parse and validate the JWT token.
-		claims := &core.Claims{}
+		claims := &pkg.Claims{}
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return core.JwtSecret, nil
+			return pkg.JwtSecret, nil
 		})
 		if err != nil || !token.Valid {
-			ctx := context.WithValue(r.Context(), core.UserContextKey, nil)
+			ctx := context.WithValue(r.Context(), pkg.UserContextKey, nil)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 
 		// Step 3: Store the user information in the request context.
-		ctx := context.WithValue(r.Context(), core.UserContextKey, claims)
-		ctx = context.WithValue(ctx, core.TokenContextKey, tokenStr)
-		ctx = context.WithValue(ctx, core.RefreshContextKey, refreshStr)
+		ctx := context.WithValue(r.Context(), pkg.UserContextKey, claims)
+		ctx = context.WithValue(ctx, pkg.TokenContextKey, tokenStr)
+		ctx = context.WithValue(ctx, pkg.RefreshContextKey, refreshStr)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -44,7 +44,7 @@ func OptionalUserMiddleware(next http.Handler) http.Handler {
 func AuthGuardMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Step 1: Get the JWT token from the "token" tokenCookie.
-		refreshStr := getCookieValue(r, string(core.RefreshContextKey))
+		refreshStr := getCookieValue(r, string(pkg.RefreshContextKey))
 		tokenStr := getTokenString(r)
 
 		if tokenStr == "" {
@@ -57,9 +57,9 @@ func AuthGuardMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Step 2: Parse and validate the JWT token.
-		claims := &core.Claims{}
+		claims := &pkg.Claims{}
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return core.JwtSecret, nil
+			return pkg.JwtSecret, nil
 		})
 		if err != nil || !token.Valid {
 			if r.Header.Get("Content-Type") != "application/json" {
@@ -71,9 +71,9 @@ func AuthGuardMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Step 3: Store the user information in the request context.
-		ctx := context.WithValue(r.Context(), core.UserContextKey, claims)
-		ctx = context.WithValue(ctx, core.TokenContextKey, tokenStr)
-		ctx = context.WithValue(ctx, core.RefreshContextKey, refreshStr)
+		ctx := context.WithValue(r.Context(), pkg.UserContextKey, claims)
+		ctx = context.WithValue(ctx, pkg.TokenContextKey, tokenStr)
+		ctx = context.WithValue(ctx, pkg.RefreshContextKey, refreshStr)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -87,7 +87,7 @@ func getCookieValue(r *http.Request, key string) string {
 }
 
 func getTokenString(r *http.Request) string {
-	tokenCookie, err := r.Cookie(string(core.TokenContextKey))
+	tokenCookie, err := r.Cookie(string(pkg.TokenContextKey))
 	if err != nil {
 		if err == http.ErrNoCookie {
 			h := r.Header.Get("Authorization")

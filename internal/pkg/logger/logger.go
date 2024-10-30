@@ -2,7 +2,7 @@ package logger
 
 import (
 	"context"
-	"framer/internal/view"
+	"framer/internal/pkg/view"
 	"net/http"
 	"os"
 

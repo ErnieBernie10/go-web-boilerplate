@@ -1,9 +1,7 @@
-package server
+package api
 
 import (
 	"encoding/json"
-	"framer/internal/database"
-	"framer/internal/logger"
 	"log"
 	"net/http"
 
@@ -13,6 +11,8 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	_ "framer/docs"
+	"framer/internal/pkg/database"
+	"framer/internal/pkg/logger"
 
 	"github.com/coder/websocket"
 	httpSwagger "github.com/swaggo/http-swagger"

@@ -1,14 +1,14 @@
 package view
 
 import (
-	"framer/internal/core"
-	"framer/internal/view/layout"
+	"framer/internal/pkg"
+	"framer/internal/pkg/view/layout"
 	"net/http"
 
 	"github.com/a-h/templ"
 )
 
-func Render(w http.ResponseWriter, r *http.Request, c templ.Component, user *core.Claims) {
+func Render(w http.ResponseWriter, r *http.Request, c templ.Component, user *pkg.Claims) {
 	if IsHxRequest(r) {
 		c.Render(r.Context(), w)
 	} else {

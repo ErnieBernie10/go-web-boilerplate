@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"framer/internal/database"
 	"framer/internal/features/auth"
 	"framer/internal/features/frame"
-	"framer/internal/logger"
+	"framer/internal/pkg/database"
+	"framer/internal/pkg/logger"
 	pb "framer/internal/proto"
 	"log"
 	"net"

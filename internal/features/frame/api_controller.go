@@ -3,10 +3,10 @@ package frame
 import (
 	"encoding/json"
 	"errors"
-	"framer/internal/api"
-	"framer/internal/core"
-	"framer/internal/database"
-	"framer/internal/util"
+	"framer/internal/pkg"
+	"framer/internal/pkg/api"
+	"framer/internal/pkg/database"
+	"framer/internal/pkg/util"
 	"net/http"
 	"strings"
 
@@ -115,7 +115,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
 	body := &saveFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrValidation, err))
 		return
 	}
 
@@ -123,7 +123,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(idParam)
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrValidation, err))
 		return
 	}
 
@@ -132,13 +132,13 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 	})
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrNotFound, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrNotFound, err))
 		return
 	}
 
 	entity, err := fromDto(body, user.ID, uuid.NullUUID{UUID: id, Valid: true})
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrValidation, err))
 		return
 	}
 
@@ -177,13 +177,13 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 	user := api.GetUser(r)
 	body := &saveFrameDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrValidation, err))
 		return
 	}
 
 	entity, err := fromDto(body, user.ID, uuid.NullUUID{})
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrValidation, err))
 		return
 	}
 
@@ -202,7 +202,7 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 
 	entity.ID = id
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrNotFound, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrNotFound, err))
 		return
 	}
 
@@ -216,7 +216,7 @@ func deleteFrameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrValidation, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrValidation, err))
 		return
 	}
 
@@ -225,7 +225,7 @@ func deleteFrameHandler(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 	})
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrNotFound, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrNotFound, err))
 		return
 	}
 

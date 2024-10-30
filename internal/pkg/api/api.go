@@ -1,7 +1,7 @@
 package api
 
 import (
-	"framer/internal/core"
+	core "framer/internal/pkg"
 	"net/http"
 )
 

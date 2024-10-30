@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"framer/internal/core"
-	"framer/internal/database"
 	"framer/internal/features/file"
+	"framer/internal/pkg"
+	"framer/internal/pkg/database"
 
 	"github.com/google/uuid"
 )
@@ -39,7 +39,7 @@ func DeleteFrame(ctx context.Context, uow *database.UnitOfWork, cmd DeleteFrameC
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return errors.Join(core.ErrNotFound, errors.New("frame not found"))
+			return errors.Join(pkg.ErrNotFound, errors.New("frame not found"))
 		}
 		return err
 	}

@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"framer/internal/api"
-	"framer/internal/core"
-	"framer/internal/database"
+	"framer/internal/pkg"
+	"framer/internal/pkg/api"
+	"framer/internal/pkg/database"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -21,7 +21,7 @@ func AuthApiResourceHandler(r chi.Router) {
 func handleApiPostRefresh(w http.ResponseWriter, r *http.Request) {
 	body := &api.LoginResponseDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrMalformedRequest, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrMalformedRequest, err))
 		return
 	}
 
@@ -30,18 +30,18 @@ func handleApiPostRefresh(w http.ResponseWriter, r *http.Request) {
 func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 	body := &loginCommandDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrMalformedRequest, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrMalformedRequest, err))
 		return
 	}
 
 	user, err := database.Service.Queries.GetUserByEmail(r.Context(), body.Email)
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrUnauthorized, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrUnauthorized, err))
 		return
 	}
 
 	if !user.PasswordHash.Valid {
-		api.HandleError(r, w, errors.Join(core.ErrUnauthorized, errors.New("invalid username or password")))
+		api.HandleError(r, w, errors.Join(pkg.ErrUnauthorized, errors.New("invalid username or password")))
 		return
 	}
 
@@ -53,7 +53,7 @@ func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrUnauthorized, errors.New("invalid username or password")))
+		api.HandleError(r, w, errors.Join(pkg.ErrUnauthorized, errors.New("invalid username or password")))
 		return
 	}
 
@@ -74,13 +74,13 @@ func handleApiPostLogin(w http.ResponseWriter, r *http.Request) {
 func handleApiPostRegister(w http.ResponseWriter, r *http.Request) {
 	body := &registerCommandDto{}
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		api.HandleError(r, w, errors.Join(core.ErrMalformedRequest, err))
+		api.HandleError(r, w, errors.Join(pkg.ErrMalformedRequest, err))
 		return
 	}
 
 	_, err := database.Service.Queries.GetUserByEmail(r.Context(), body.Email)
 	if err == nil {
-		api.HandleError(r, w, errors.Join(core.ErrValidation, errors.New("user with e-mail already exists")))
+		api.HandleError(r, w, errors.Join(pkg.ErrValidation, errors.New("user with e-mail already exists")))
 		return
 	}
 

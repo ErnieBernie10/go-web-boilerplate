@@ -1,8 +1,8 @@
 package home
 
-import "framer/internal/core"
+import "framer/internal/pkg"
 
-templ indexPage(user *core.Claims) {
+templ indexPage(user *pkg.Claims) {
 	<header>
 		if user != nil {
 			hello { user.Email }

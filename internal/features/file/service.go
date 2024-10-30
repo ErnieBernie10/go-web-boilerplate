@@ -3,7 +3,7 @@ package file
 import (
 	"context"
 	"database/sql"
-	"framer/internal/database"
+	"framer/internal/pkg/database"
 	"os"
 	"path/filepath"
 

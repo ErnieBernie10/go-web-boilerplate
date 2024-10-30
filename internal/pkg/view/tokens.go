@@ -2,7 +2,7 @@ package view
 
 import (
 	"context"
-	"framer/internal/core"
+	"framer/internal/pkg"
 	"net/http"
 
 	"google.golang.org/grpc/metadata"
@@ -10,8 +10,8 @@ import (
 
 func GetTokens(r *http.Request) func() (string, string) {
 	return func() (string, string) {
-		accessToken, _ := r.Context().Value(core.TokenContextKey).(string)
-		refreshToken, _ := r.Context().Value(core.RefreshContextKey).(string)
+		accessToken, _ := r.Context().Value(pkg.TokenContextKey).(string)
+		refreshToken, _ := r.Context().Value(pkg.RefreshContextKey).(string)
 
 		return accessToken, refreshToken
 	}

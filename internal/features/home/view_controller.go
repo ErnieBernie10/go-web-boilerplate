@@ -1,9 +1,9 @@
 package home
 
 import (
-	"framer/internal/api"
-	"framer/internal/view"
-	"framer/internal/view/layout"
+	"framer/internal/pkg/api"
+	"framer/internal/pkg/view"
+	"framer/internal/pkg/view/layout"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"

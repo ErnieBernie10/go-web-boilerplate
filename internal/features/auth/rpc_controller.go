@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"framer/internal/core"
-	"framer/internal/database"
+	"framer/internal/pkg"
+	"framer/internal/pkg/database"
 	pb "framer/internal/proto"
 )
 
@@ -17,11 +17,11 @@ type AuthController struct {
 func (c *AuthController) Login(ctx context.Context, req *pb.LoginRequest) (*pb.AppUser, error) {
 	user, err := c.Db.Queries.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, errors.Join(core.ErrUnauthorized, err)
+		return nil, errors.Join(pkg.ErrUnauthorized, err)
 	}
 
 	if !user.PasswordHash.Valid {
-		return nil, errors.Join(core.ErrUnauthorized, errors.New("invalid username or password"))
+		return nil, errors.Join(pkg.ErrUnauthorized, errors.New("invalid username or password"))
 	}
 
 	tokenString, refreshTokenString, err := login(
@@ -32,7 +32,7 @@ func (c *AuthController) Login(ctx context.Context, req *pb.LoginRequest) (*pb.A
 	)
 
 	if err != nil {
-		return nil, errors.Join(core.ErrUnauthorized, err)
+		return nil, errors.Join(pkg.ErrUnauthorized, err)
 	}
 
 	return &pb.AppUser{
@@ -44,7 +44,7 @@ func (c *AuthController) Login(ctx context.Context, req *pb.LoginRequest) (*pb.A
 func (c *AuthController) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.EmptyResponse, error) {
 	_, err := c.Db.Queries.GetUserByEmail(ctx, req.Email)
 	if err == nil {
-		return nil, errors.Join(core.ErrValidation, errors.New("user with e-mail already exists"))
+		return nil, errors.Join(pkg.ErrValidation, errors.New("user with e-mail already exists"))
 	}
 
 	hashedPassword, err := hashString(req.Password)

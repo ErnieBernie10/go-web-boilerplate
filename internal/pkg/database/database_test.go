@@ -87,7 +87,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestNew(t *testing.T) {
-	err := NewDb(dbContainer.MustConnectionString(context.Background()))
+	_, err := NewDb(dbContainer.MustConnectionString(context.Background()))
 	if err != nil {
 		t.Fatal("New() returned nil")
 	}

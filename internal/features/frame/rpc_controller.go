@@ -2,9 +2,9 @@ package frame
 
 import (
 	"context"
-	"framer/internal/database"
+	"framer/internal/pkg/database"
+	"framer/internal/pkg/rpc"
 	pb "framer/internal/proto"
-	"framer/internal/rpc"
 
 	"github.com/google/uuid"
 )

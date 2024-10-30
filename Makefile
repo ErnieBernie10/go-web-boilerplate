@@ -53,7 +53,7 @@ generate:
 	@sqlc generate
 
 swag:
-	@swag init -g internal/server/routes.go
+	@swag init -g internal/api/routes.go
 
 protoc:
 	@protoc --go_out=. --go-grpc_out=. proto/framer.proto
@@ -67,7 +67,7 @@ test:
 # Integrations Tests for the application
 itest:
 	@echo "Running integration tests..."
-	@go test ./internal/database -v
+	@go test ./internal/pkg/database -v
 
 
 # Clean the binary

@@ -3,7 +3,7 @@ package frame
 import (
 	"errors"
 	"fmt"
-	"framer/internal/core"
+	"framer/internal/pkg"
 	"time"
 	"unicode/utf8"
 
@@ -36,11 +36,11 @@ type Model struct {
 
 func CreateTitle(title string) (Title, error) {
 	if utf8.RuneCountInString(title) > TitleMaxLength {
-		return "", errors.Join(core.ErrValidation, fmt.Errorf("title may not be longer than %d characters", TitleMaxLength))
+		return "", errors.Join(pkg.ErrValidation, fmt.Errorf("title may not be longer than %d characters", TitleMaxLength))
 	}
 
 	if title == "" {
-		return "", errors.Join(core.ErrValidation, fmt.Errorf("title may not be empty"))
+		return "", errors.Join(pkg.ErrValidation, fmt.Errorf("title may not be empty"))
 	}
 
 	return Title(title), nil
@@ -48,7 +48,7 @@ func CreateTitle(title string) (Title, error) {
 
 func CreateDescription(description string) (Description, error) {
 	if utf8.RuneCountInString(description) > DescriptionMaxLength {
-		return "", errors.Join(core.ErrValidation, fmt.Errorf("description may not be longer than %d characters", DescriptionMaxLength))
+		return "", errors.Join(pkg.ErrValidation, fmt.Errorf("description may not be longer than %d characters", DescriptionMaxLength))
 	}
 
 	return Description(description), nil
@@ -57,7 +57,7 @@ func CreateDescription(description string) (Description, error) {
 func CreateUserID(userId string) (uuid.UUID, error) {
 	id, err := uuid.Parse(userId)
 	if err != nil {
-		return uuid.Nil, errors.Join(core.ErrValidation, errors.New("invalid user id"))
+		return uuid.Nil, errors.Join(pkg.ErrValidation, errors.New("invalid user id"))
 	}
 
 	return id, nil

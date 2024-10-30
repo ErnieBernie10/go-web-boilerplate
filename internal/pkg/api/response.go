@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"framer/internal/core"
+	"framer/internal/pkg"
 	"net/http"
 	"strings"
 )
@@ -30,13 +30,13 @@ func WriteJSONError(w http.ResponseWriter, statusCode int, err error) {
 }
 
 func HandleError(r *http.Request, w http.ResponseWriter, err error) {
-	if errors.Is(err, core.ErrNotFound) {
+	if errors.Is(err, pkg.ErrNotFound) {
 		WriteJSONError(w, http.StatusNotFound, err)
 	} else if errors.Is(err, sql.ErrNoRows) {
 		WriteJSONError(w, http.StatusNotFound, err)
-	} else if errors.Is(err, core.ErrValidation) {
+	} else if errors.Is(err, pkg.ErrValidation) {
 		WriteJSONError(w, http.StatusBadRequest, err)
-	} else if errors.Is(err, core.ErrUnauthorized) {
+	} else if errors.Is(err, pkg.ErrUnauthorized) {
 		WriteJSONError(w, http.StatusUnauthorized, err)
 	} else {
 		WriteJSONError(w, http.StatusInternalServerError, err)

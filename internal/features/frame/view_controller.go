@@ -1,9 +1,9 @@
 package frame
 
 import (
-	"framer/internal/api"
-	"framer/internal/rpc"
-	"framer/internal/view"
+	"framer/internal/pkg/api"
+	"framer/internal/pkg/rpc"
+	"framer/internal/pkg/view"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"

@@ -32,7 +32,8 @@ create table frame (
   content text not null,
   file_id uuid,
   FOREIGN KEY (user_id) REFERENCES app_user(id),
-  FOREIGN KEY (file_id) REFERENCES file(id)
+  FOREIGN KEY (file_id) REFERENCES file(id),
+  PRIMARY KEY (id)
 );
 -- migrate:down
 drop table frame;

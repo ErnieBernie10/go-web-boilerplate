@@ -8,18 +8,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Seed() (uuid.UUID, error) {
+func Seed(db *DbService) (uuid.UUID, error) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte("test"), bcrypt.DefaultCost)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	Service.Queries.Register(context.Background(), RegisterParams{
+	db.Queries.Register(context.Background(), RegisterParams{
 		Email:        "test@test.com",
 		PasswordHash: sql.NullString{String: string(passwordHash), Valid: true},
 	})
 
-	user, err := Service.Queries.GetUserByEmail(context.Background(), "test@test.com")
+	user, err := db.Queries.GetUserByEmail(context.Background(), "test@test.com")
 	if err != nil {
 		return uuid.UUID{}, err
 	}

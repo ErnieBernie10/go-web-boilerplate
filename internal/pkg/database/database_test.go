@@ -16,6 +16,7 @@ import (
 )
 
 var dbContainer *postgres.PostgresContainer
+var db *DbService
 
 var userID uuid.UUID
 
@@ -57,7 +58,7 @@ func mustStartPostgresContainer() (func(context.Context) error, error) {
 	u, _ := url.Parse(connStr)
 	db := dbmate.New(u)
 
-	db.MigrationsDir = []string{"../../db/migrations"}
+	db.MigrationsDir = []string{"../../../db/migrations"}
 	log.Println(db.MigrationsDir)
 
 	err = db.CreateAndMigrate()
@@ -74,8 +75,12 @@ func TestMain(m *testing.M) {
 		log.Fatalf("could not start postgres container: %v", err)
 	}
 
-	NewDb(dbContainer.MustConnectionString(context.Background()))
-	userID, err = Seed()
+	db, err = NewDb(dbContainer.MustConnectionString(context.Background()))
+	if err != nil {
+		log.Fatalln("could create db", err)
+	}
+
+	userID, err = Seed(db)
 	if err != nil {
 		log.Fatalf("could not seed user: %v", err)
 	}
@@ -95,7 +100,7 @@ func TestNew(t *testing.T) {
 
 func TestHealth(t *testing.T) {
 
-	stats := Health()
+	stats := db.Health()
 
 	if stats["status"] != "up" {
 		t.Fatalf("expected status to be up, got %s", stats["status"])
@@ -113,17 +118,21 @@ func TestHealth(t *testing.T) {
 func TestGetFrames(t *testing.T) {
 	ctx := context.Background()
 
-	_, err := Service.Queries.SaveFrame(ctx, SaveFrameParams{
+	_, err := db.Queries.SaveFrame(ctx, SaveFrameParams{
 		Title:       "Test",
 		Description: "Test",
 		UserID:      userID,
 		FrameStatus: 1,
+		ID:          uuid.New(),
+		ContentType: int16(1),
+		Content:     "",
+		FileID:      uuid.NullUUID{},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	res, err := Service.Queries.GetFrames(ctx, userID)
+	res, err := db.Queries.GetFrames(ctx, userID)
 	if err != nil {
 		t.Fatal(err)
 	}

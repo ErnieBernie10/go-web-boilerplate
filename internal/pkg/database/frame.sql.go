@@ -84,7 +84,7 @@ func (q *Queries) GetFrame(ctx context.Context, arg GetFrameParams) (GetFrameRow
 const getFrames = `-- name: GetFrames :many
 select frame.id, title, description, frame.created_at, frame.modified_at, user_id, frame_status, content_type, content, file_id, f.id, file_name, f.created_at, f.modified_at
 from frame
-    join file f on f.id = frame.file_id
+    left join file f on f.id = frame.file_id
 where user_id = $1
 `
 
@@ -99,10 +99,10 @@ type GetFramesRow struct {
 	ContentType  int16
 	Content      string
 	FileID       uuid.NullUUID
-	ID_2         uuid.UUID
+	ID_2         uuid.NullUUID
 	FileName     sql.NullString
-	CreatedAt_2  time.Time
-	ModifiedAt_2 time.Time
+	CreatedAt_2  sql.NullTime
+	ModifiedAt_2 sql.NullTime
 }
 
 func (q *Queries) GetFrames(ctx context.Context, userID uuid.UUID) ([]GetFramesRow, error) {
@@ -151,16 +151,20 @@ insert into frame (
     created_at,
     user_id,
     frame_status,
-    file_id
+    file_id,
+    content_type,
+    content
   )
-values ($1, $2, $3, NOW(), $4, $5, $6) on conflict (id) DO
+values ($1, $2, $3, NOW(), $4, $5, $6, $7, $8) on conflict (id) DO
 UPDATE
 set title = $2,
   description = $3,
   user_id = $4,
   frame_status = $5,
   file_id = $6,
-  modified_at = NOW()
+  modified_at = NOW(),
+  content_type = $7,
+  content = $8
 RETURNING id
 `
 
@@ -171,6 +175,8 @@ type SaveFrameParams struct {
 	UserID      uuid.UUID
 	FrameStatus int16
 	FileID      uuid.NullUUID
+	ContentType int16
+	Content     string
 }
 
 func (q *Queries) SaveFrame(ctx context.Context, arg SaveFrameParams) (uuid.UUID, error) {
@@ -181,6 +187,8 @@ func (q *Queries) SaveFrame(ctx context.Context, arg SaveFrameParams) (uuid.UUID
 		arg.UserID,
 		arg.FrameStatus,
 		arg.FileID,
+		arg.ContentType,
+		arg.Content,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

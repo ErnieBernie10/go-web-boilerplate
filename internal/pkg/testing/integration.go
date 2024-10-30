@@ -63,6 +63,7 @@ func MustStartPostgresContainer() (*postgres.PostgresContainer, error) {
 	db.MigrationsDir = []string{"../../../db/migrations"}
 	log.Println(db.MigrationsDir)
 
+	db.AutoDumpSchema = false
 	err = db.CreateAndMigrate()
 	if err != nil {
 		return dbContainer, err

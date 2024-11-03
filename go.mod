@@ -7,10 +7,8 @@ require (
 	github.com/amacneil/dbmate/v2 v2.21.0
 	github.com/coder/websocket v1.8.12
 	github.com/go-chi/chi/v5 v5.1.0
-	github.com/go-chi/httplog/v2 v2.1.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
-	github.com/joho/godotenv v1.5.1
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.3
 	github.com/testcontainers/testcontainers-go v0.33.0
@@ -31,7 +29,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/amacneil/dbmate v1.16.2
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/containerd/containerd v1.7.18 // indirect
 	github.com/containerd/log v0.1.0 // indirect

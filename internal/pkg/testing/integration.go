@@ -2,6 +2,7 @@ package testing
 
 import (
 	"context"
+	"fmt"
 	"framer/internal/pkg"
 	"framer/internal/pkg/database"
 	"framer/internal/pkg/view"
@@ -78,7 +79,9 @@ func SetupTests(m *testing.M) (*database.DbService, uuid.UUID, func(context.Cont
 		log.Fatalf("could not start postgres container: %v", err)
 	}
 
-	db, err := database.NewDb(dbContainer.MustConnectionString(context.Background()))
+	connString := dbContainer.MustConnectionString(context.Background())
+	fmt.Println(connString)
+	db, err := database.NewDb(connString)
 	if err != nil {
 		log.Fatalln("could create db", err)
 	}

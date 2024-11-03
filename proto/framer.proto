@@ -38,7 +38,6 @@ message File {
 message CreateFrameRequest {
     string title = 2;                  // Title
     string description = 3;            // Description
-    string user_id = 4;                // UUID of the user
     string content = 5;                // Content
     FrameStatus frame_status = 6;      // Frame Status
     ContentType content_type = 7;      // Content Type
@@ -49,7 +48,6 @@ message UpdateFrameRequest {
     string id = 1;                     // UUID
     string title = 2;                  // Title
     string description = 3;            // Description
-    string user_id = 4;                // UUID of the user
     string content = 5;                // Content
     FrameStatus frame_status = 6;      // Frame Status
     ContentType content_type = 7;      // Content Type
@@ -60,7 +58,6 @@ message Frame {
     string id = 1;                     // UUID
     string title = 2;                  // Title
     string description = 3;            // Description
-    string user_id = 4;                // UUID of the user
     string content = 5;                // Content
     FrameStatus frame_status = 6;      // Frame Status
     ContentType content_type = 7;      // Content Type

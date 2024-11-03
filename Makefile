@@ -61,7 +61,7 @@ protoc:
 # Test the application
 test:
 	@echo "Testing..."
-	@go test ./... -v
+	@go test ./...
 
 
 # Integrations Tests for the application

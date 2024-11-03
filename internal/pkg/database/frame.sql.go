@@ -32,7 +32,7 @@ func (q *Queries) DeleteFrame(ctx context.Context, arg DeleteFrameParams) error 
 const getFrame = `-- name: GetFrame :one
 select frame.id, title, description, frame.created_at, frame.modified_at, user_id, frame_status, content_type, content, file_id, f.id, file_name, f.created_at, f.modified_at
 from frame
-  join file f on f.id = frame.file_id
+  left join file f on f.id = frame.file_id
 where frame.id = $1
   and user_id = $2
 `
@@ -53,10 +53,10 @@ type GetFrameRow struct {
 	ContentType  int16
 	Content      string
 	FileID       uuid.NullUUID
-	ID_2         uuid.UUID
+	ID_2         uuid.NullUUID
 	FileName     sql.NullString
-	CreatedAt_2  time.Time
-	ModifiedAt_2 time.Time
+	CreatedAt_2  sql.NullTime
+	ModifiedAt_2 sql.NullTime
 }
 
 func (q *Queries) GetFrame(ctx context.Context, arg GetFrameParams) (GetFrameRow, error) {

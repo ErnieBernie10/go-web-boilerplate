@@ -43,7 +43,7 @@ func uploadRawFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uow, err := database.NewUnitOfWork()
+	uow, err := database.Service.NewUnitOfWork()
 	if err != nil {
 		api.HandleError(r, w, err)
 	}

@@ -142,7 +142,7 @@ func putFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uow, err := database.NewUnitOfWork()
+	uow, err := database.Service.NewUnitOfWork()
 	defer uow.Rollback()
 	if err != nil {
 		api.HandleError(r, w, errors.Join(err, errors.New("failed to save frame")))
@@ -187,7 +187,7 @@ func postFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uow, err := database.NewUnitOfWork()
+	uow, err := database.Service.NewUnitOfWork()
 	defer uow.Rollback()
 	if err != nil {
 		api.HandleError(r, w, errors.Join(err, errors.New("failed to create frame")))
@@ -229,7 +229,7 @@ func deleteFrameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uow, err := database.NewUnitOfWork()
+	uow, err := database.Service.NewUnitOfWork()
 	defer uow.Rollback()
 
 	err = DeleteFrame(r.Context(), uow, DeleteFrameCommand{

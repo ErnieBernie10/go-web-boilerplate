@@ -1,7 +1,7 @@
 -- name: GetFrame :one
 select *
 from frame
-  join file f on f.id = frame.file_id
+  left join file f on f.id = frame.file_id
 where frame.id = $1
   and user_id = $2;
 

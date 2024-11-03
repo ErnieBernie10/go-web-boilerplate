@@ -62,7 +62,6 @@ func (c *FrameController) ListFrames(ctx context.Context, req *pb.EmptyResponse)
 			Id:          frame.ID.String(),
 			Title:       frame.Title,
 			Description: frame.Description,
-			UserId:      frame.UserID.String(),
 			Content:     frame.Content,
 			FrameStatus: pb.FrameStatus(frame.FrameStatus),
 			ContentType: pb.ContentType(frame.ContentType),
@@ -93,7 +92,7 @@ func (c *FrameController) UpdateFrame(ctx context.Context, req *pb.UpdateFrameRe
 		return nil, err
 	}
 
-	uow, err := database.NewUnitOfWork()
+	uow, err := c.Db.NewUnitOfWork()
 	if err != nil {
 		return nil, err
 	}
@@ -124,13 +123,19 @@ func (c *FrameController) CreateFrame(ctx context.Context, req *pb.CreateFrameRe
 		return nil, err
 	}
 
-	uow, err := database.NewUnitOfWork()
+	uow, err := c.Db.NewUnitOfWork()
+	defer uow.Rollback()
 	if err != nil {
 		return nil, err
 	}
-	defer uow.Rollback()
 
-	id, err := SaveFrameWithFile(ctx, uow, frame, req.File.Content, req.File.FileName)
+	var id uuid.UUID
+	if req.File != nil {
+		id, err = SaveFrameWithFile(ctx, uow, frame, req.File.Content, req.File.FileName)
+	} else {
+		id, err = SaveFrame(ctx, uow, frame)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +171,6 @@ func (c *FrameController) GetFrame(ctx context.Context, req *pb.GetByIdRequest) 
 		Id:          frame.ID.String(),
 		Title:       frame.Title,
 		Description: frame.Description,
-		UserId:      frame.UserID.String(),
 		Content:     "",
 		FrameStatus: pb.FrameStatus(frame.FrameStatus),
 		ContentType: pb.ContentType(frame.ContentType),

@@ -38,15 +38,14 @@ type UnitOfWork struct {
 }
 
 // NewUnitOfWork initializes a new UnitOfWork with repositories
-func NewUnitOfWork() (*UnitOfWork, error) {
-	db := Service.Db
-	tx, err := db.Begin()
+func (db *DbService) NewUnitOfWork() (*UnitOfWork, error) {
+	tx, err := db.Db.Begin()
 	if err != nil {
 		return nil, err
 	}
 	uow := &UnitOfWork{
 		tx:      tx,
-		Queries: Service.Queries.WithTx(tx),
+		Queries: db.Queries.WithTx(tx),
 	}
 	return uow, nil
 }
